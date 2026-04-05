@@ -15,7 +15,6 @@ from .api import PreComApiClient
 from .const import (
     ATTR_HOURS,
     CONF_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     SERVICE_SET_IN_REGION,
     SERVICE_SET_OUTSIDE_REGION,
@@ -39,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up PreCom from a config entry."""
     username: str = entry.data[CONF_USERNAME]
     password: str = entry.data[CONF_PASSWORD]
-    scan_interval: int = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    scan_interval: int | None = entry.data.get(CONF_SCAN_INTERVAL)
 
     session = async_get_clientsession(hass)
     client = PreComApiClient(username=username, password=password, session=session)

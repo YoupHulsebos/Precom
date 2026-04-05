@@ -15,7 +15,6 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .api import PreComApiClient, PreComAuthError, PreComApiError
 from .const import (
     CONF_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
 
@@ -25,7 +24,7 @@ STEP_USER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_USERNAME): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(
+        vol.Optional(CONF_SCAN_INTERVAL): vol.All(
             int, vol.Range(min=10, max=3600)
         ),
     }
@@ -80,7 +79,7 @@ class PreComConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         CONF_USERNAME: username,
                         CONF_PASSWORD: password,
-                        CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                        CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL),
                     },
                 )
 
@@ -111,14 +110,18 @@ class PreComOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        current_interval = self._config_entry.data.get(
-            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-        )
-        schema = vol.Schema(
-            {
-                vol.Optional(CONF_SCAN_INTERVAL, default=current_interval): vol.All(
-                    int, vol.Range(min=10, max=3600)
-                ),
+        current_interval = self._config_entry.data.get(CONF_SCAN_INTERVAL)
+        interval_schema: dict = {
+            vol.Optional(CONF_SCAN_INTERVAL): vol.Any(
+                None,
+                vol.All(int, vol.Range(min=10, max=3600)),
+            )
+        }
+        if current_interval is not None:
+            interval_schema = {
+                vol.Optional(
+                    CONF_SCAN_INTERVAL, default=current_interval
+                ): vol.All(int, vol.Range(min=10, max=3600))
             }
-        )
+        schema = vol.Schema(interval_schema)
         return self.async_show_form(step_id="init", data_schema=schema)

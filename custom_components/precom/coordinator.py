@@ -43,13 +43,13 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         self,
         hass: HomeAssistant,
         client: PreComApiClient,
-        scan_interval: int,
+        scan_interval: int | None,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=scan_interval),
+            update_interval=timedelta(seconds=scan_interval) if scan_interval else None,
         )
         self.client = client
 

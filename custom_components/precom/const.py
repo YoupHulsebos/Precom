@@ -7,9 +7,6 @@ CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
 
-# Defaults
-DEFAULT_SCAN_INTERVAL = 60  # seconds
-
 # API endpoints
 API_BASE_URL = "https://app.pre-com.nl"
 API_TOKEN_URL = f"{API_BASE_URL}/Token"

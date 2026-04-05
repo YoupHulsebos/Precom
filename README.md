@@ -30,7 +30,7 @@ Home Assistant integration for the [PreCom](https://app.pre-com.nl) fire departm
 1. Go to **Settings → Devices & Services → Add Integration**.
 2. Search for **PreCom**.
 3. Enter your PreCom **username** and **password**.
-4. Optionally set a **scan interval** (default: 60 s, range: 10–3600 s).
+4. Optionally set a **scan interval** (range: 10–3600 s). Leave blank to disable automatic polling — use `precom.update_alarm` to refresh on demand instead.
 
 Credentials are validated against the PreCom API before the entry is saved.
 
