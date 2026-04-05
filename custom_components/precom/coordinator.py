@@ -73,7 +73,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             return PreComCoordinatorData(alarm_id=STATE_NO_ALARM, functions=[])
 
         latest = alarms[0]
-        alarm_id = str(latest.get("id", STATE_NO_ALARM))
+        alarm_id = str(latest.get("MsgInID", STATE_NO_ALARM))
 
         # NOTE: The API uses "ServiceFuntions" (missing 'c') — this is an
         # intentional typo in the PreCom API response. Do not correct it.
