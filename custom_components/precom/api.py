@@ -1,0 +1,167 @@
+"""Async API client for the PreCom fire department alerting service."""
+from __future__ import annotations
+
+import logging
+from typing import Any
+
+import aiohttp
+
+from .const import (
+    API_ALARMS_URL,
+    API_SET_OUTSIDE_REGION_URL,
+    API_TOKEN_URL,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class PreComAuthError(Exception):
+    """Raised when authentication fails (bad credentials or 401)."""
+
+
+class PreComApiError(Exception):
+    """Raised for non-auth API errors (network, 5xx, unexpected response)."""
+
+
+class PreComApiClient:
+    """All HTTP communication with app.pre-com.nl.
+
+    Token lifecycle:
+      - _token is None on first use; authenticate() is called automatically.
+      - On any 401, the caller (coordinator) should call authenticate() then retry.
+      - authenticate() raises PreComAuthError on bad credentials.
+    """
+
+    def __init__(
+        self,
+        username: str,
+        password: str,
+        session: aiohttp.ClientSession,
+    ) -> None:
+        self._username = username
+        self._password = password
+        self._session = session
+        self._token: str | None = None
+
+    async def authenticate(self) -> None:
+        """Fetch a fresh JWT token and store it internally.
+
+        The PreCom API returns the token as a quoted JSON string (e.g. '"eyJ..."').
+        We strip the surrounding quotes to get the raw token, mirroring the
+        Jinja2 '| trim | trim('"')' logic in the original precom_token.yaml script.
+
+        Raises:
+            PreComAuthError: credentials rejected or unexpected response format.
+            PreComApiError: network-level failure.
+        """
+        payload = (
+            f"grant_type=password"
+            f"&username={self._username}"
+            f"&password={self._password}"
+        )
+        try:
+            async with self._session.post(
+                API_TOKEN_URL,
+                data=payload,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 400:
+                    raise PreComAuthError(
+                        f"Authentication failed (HTTP {response.status})"
+                    )
+                if response.status != 200:
+                    raise PreComApiError(
+                        f"Token endpoint returned HTTP {response.status}"
+                    )
+                raw = await response.text()
+                self._token = raw.strip().strip('"')
+        except aiohttp.ClientError as err:
+            raise PreComApiError(f"Network error during authentication: {err}") from err
+
+    def _auth_headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self._token}"}
+
+    async def get_alarm_messages(self) -> list[dict[str, Any]]:
+        """Fetch the list of active alarm messages.
+
+        Returns an empty list when there are no active alarms.
+
+        Raises:
+            PreComAuthError: token was rejected (401).
+            PreComApiError: any other HTTP or network failure.
+        """
+        if self._token is None:
+            await self.authenticate()
+
+        try:
+            async with self._session.get(
+                API_ALARMS_URL,
+                headers=self._auth_headers(),
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by alarms endpoint (401)")
+                if response.status != 200:
+                    raise PreComApiError(
+                        f"GetAlarmMessages returned HTTP {response.status}"
+                    )
+                data = await response.json(content_type=None)
+                if not isinstance(data, list):
+                    raise PreComApiError(
+                        f"Expected list from GetAlarmMessages, got {type(data)}"
+                    )
+                return data
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error fetching alarm messages: {err}"
+            ) from err
+
+    async def set_outside_region(self, hours: int, geofence: str) -> None:
+        """Mark the user as outside region for the given number of hours.
+
+        Args:
+            hours: Number of hours to stay outside region (passed as query param).
+            geofence: Geofence identifier string (passed in JSON body).
+
+        Raises:
+            PreComAuthError: token rejected.
+            PreComApiError: other failure.
+        """
+        if self._token is None:
+            await self.authenticate()
+
+        url = f"{API_SET_OUTSIDE_REGION_URL}?hours={hours}"
+        body = {"Location": {"Geofence": geofence}}
+
+        try:
+            async with self._session.post(
+                url,
+                headers=self._auth_headers(),
+                json=body,
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by SetOutsideRegion (401)")
+                if response.status not in (200, 204):
+                    raise PreComApiError(
+                        f"SetOutsideRegion returned HTTP {response.status}"
+                    )
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error setting outside region: {err}"
+            ) from err
+
+    async def set_in_region(self) -> None:
+        """Mark the user as back inside region.
+
+        The PreCom API does not expose a dedicated "set in region" endpoint in
+        the existing configuration. Calling SetOutsideRegion with hours=0
+        effectively cancels the outside-region status. If the API later exposes
+        a dedicated endpoint, only this method needs updating.
+
+        Raises:
+            PreComAuthError: token rejected.
+            PreComApiError: other failure.
+        """
+        await self.set_outside_region(hours=0, geofence="")

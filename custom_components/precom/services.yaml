@@ -1,0 +1,28 @@
+set_outside_region:
+  name: Set Outside Region
+  description: >
+    Mark the PreCom user as outside their response region for a number of hours.
+  fields:
+    hours:
+      name: Hours
+      description: Number of hours to remain outside the region (1–72).
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 72
+          mode: box
+          unit_of_measurement: h
+    geofence:
+      name: Geofence
+      description: Geofence identifier string as expected by the PreCom API.
+      required: true
+      selector:
+        text: {}
+
+set_in_region:
+  name: Set In Region
+  description: >
+    Cancel the outside-region status and mark the PreCom user as back inside
+    their response region.
+  fields: {}

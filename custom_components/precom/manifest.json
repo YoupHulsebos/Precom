@@ -1,0 +1,12 @@
+{
+  "domain": "precom",
+  "name": "PreCom",
+  "version": "1.0.0",
+  "documentation": "https://github.com/yourusername/hacs-precom",
+  "issue_tracker": "https://github.com/yourusername/hacs-precom/issues",
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": []
+}

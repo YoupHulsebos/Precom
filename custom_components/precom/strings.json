@@ -1,0 +1,43 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to PreCom",
+        "description": "Enter your PreCom account credentials. These will be stored encrypted in Home Assistant.",
+        "data": {
+          "username": "Username (email address)",
+          "password": "Password",
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password. Please check your PreCom credentials.",
+      "cannot_connect": "Unable to reach the PreCom API. Check your internet connection.",
+      "unknown": "An unexpected error occurred. Please check the Home Assistant logs."
+    },
+    "abort": {
+      "already_configured": "This PreCom account is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PreCom Options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  },
+  "services": {
+    "set_outside_region": {
+      "name": "Set Outside Region",
+      "description": "Mark the PreCom user as outside their response region."
+    },
+    "set_in_region": {
+      "name": "Set In Region",
+      "description": "Cancel the outside-region status."
+    }
+  }
+}
