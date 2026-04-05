@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     ATTR_ALARM_ID,
     ATTR_FUNCTIONS,
+    ATTR_FUNCTIONS_FORMATTED,
     ATTR_LAST_UPDATED,
     ATTR_TEXT,
     ATTR_TIMESTAMP,
@@ -71,6 +72,17 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             return STATE_NO_ALARM
         return self.coordinator.data.alarm_id
 
+    @staticmethod
+    def _format_functions(functions: list[dict]) -> str:
+        """Return a human-readable string listing each function and its users."""
+        lines: list[str] = []
+        for func in functions:
+            users: list[str] = func.get("users", [])
+            lines.append(f"{func.get('label', '')} ({len(users)}):")
+            for user in users:
+                lines.append(f"- {user}")
+        return "\n".join(lines)
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return alarm details as entity attributes."""
@@ -81,5 +93,8 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             ATTR_TEXT: self.coordinator.data.text,
             ATTR_TIMESTAMP: self.coordinator.data.timestamp,
             ATTR_FUNCTIONS: self.coordinator.data.functions,
+            ATTR_FUNCTIONS_FORMATTED: self._format_functions(
+                self.coordinator.data.functions
+            ),
             ATTR_LAST_UPDATED: datetime.now(timezone.utc).isoformat(),
         }

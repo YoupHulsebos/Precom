@@ -30,6 +30,7 @@ STATE_NO_ALARM = "none"
 # Sensor extra attribute keys
 ATTR_ALARM_ID = "alarm_id"
 ATTR_FUNCTIONS = "functions"
+ATTR_FUNCTIONS_FORMATTED = "functions_formatted"
 ATTR_LAST_UPDATED = "last_updated"
 ATTR_TEXT = "text"
 ATTR_TIMESTAMP = "timestamp"
