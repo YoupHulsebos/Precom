@@ -5,12 +5,12 @@ set_outside_region:
   fields:
     hours:
       name: Hours
-      description: Number of hours to remain outside the region (1–72).
+      description: Number of hours to remain outside the region (0-24).
       required: true
       selector:
         number:
-          min: 1
-          max: 72
+          min: 0
+          max: 24
           mode: box
           unit_of_measurement: h
     geofence:
