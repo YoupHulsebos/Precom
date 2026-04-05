@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -81,7 +81,19 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         latest = alarms[0]
         alarm_id = str(latest.get("MsgInID", STATE_NO_ALARM))
         text = str(latest.get("Text", ""))
-        timestamp = str(latest.get("Date", ""))
+
+        # The API returns Timestamp as an ISO 8601 date-time string.
+        # Parse it and attach UTC if no timezone is present.
+        raw_ts = latest.get("Timestamp", "")
+        timestamp = ""
+        if raw_ts:
+            try:
+                dt = datetime.fromisoformat(str(raw_ts))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                timestamp = dt.isoformat()
+            except ValueError:
+                timestamp = str(raw_ts)
 
         # NOTE: The API uses "ServiceFuntions" (missing 'c') — this is an
         # intentional typo in the PreCom API response. Do not correct it.
