@@ -75,13 +75,13 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
     @staticmethod
     def _format_functions(functions: list[dict]) -> str:
         """Return a human-readable string listing each function and its users."""
-        lines: list[str] = []
+        groups: list[str] = []
         for func in functions:
             users: list[str] = func.get("users", [])
-            lines.append(f"{func.get('label', '')} ({len(users)}):")
-            for user in users:
-                lines.append(f"- {user}")
-        return "\n".join(lines)
+            block = [f"{func.get('label', '')} ({len(users)}):"]
+            block.extend(f"- {user}" for user in users)
+            groups.append("\n".join(block))
+        return "\n\n".join(groups)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
