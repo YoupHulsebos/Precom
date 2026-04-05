@@ -19,10 +19,10 @@ API_SET_OUTSIDE_REGION_URL = f"{API_BASE_URL}/api/v2/Available/SetOutsideRegion"
 # Service names
 SERVICE_SET_OUTSIDE_REGION = "set_outside_region"
 SERVICE_SET_IN_REGION = "set_in_region"
+SERVICE_UPDATE_ALARM = "update_alarm"
 
 # Service field names
 ATTR_HOURS = "hours"
-ATTR_GEOFENCE = "geofence"
 
 # Sensor state when no alarm is active
 STATE_NO_ALARM = "none"
@@ -31,3 +31,5 @@ STATE_NO_ALARM = "none"
 ATTR_ALARM_ID = "alarm_id"
 ATTR_FUNCTIONS = "functions"
 ATTR_LAST_UPDATED = "last_updated"
+ATTR_TEXT = "text"
+ATTR_TIMESTAMP = "timestamp"

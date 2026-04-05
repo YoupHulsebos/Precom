@@ -117,12 +117,11 @@ class PreComApiClient:
                 f"Network error fetching alarm messages: {err}"
             ) from err
 
-    async def set_outside_region(self, hours: int, geofence: str) -> None:
+    async def set_outside_region(self, hours: int) -> None:
         """Mark the user as outside region for the given number of hours.
 
         Args:
             hours: Number of hours to stay outside region (passed as query param).
-            geofence: Geofence identifier string (passed in JSON body).
 
         Raises:
             PreComAuthError: token rejected.
@@ -132,7 +131,7 @@ class PreComApiClient:
             await self.authenticate()
 
         url = f"{API_SET_OUTSIDE_REGION_URL}?hours={hours}"
-        body = {"Location": {"Geofence": geofence}}
+        body = {"Location": {"Geofence": "EXIT"}}
 
         try:
             async with self._session.post(
@@ -155,13 +154,34 @@ class PreComApiClient:
     async def set_in_region(self) -> None:
         """Mark the user as back inside region.
 
-        The PreCom API does not expose a dedicated "set in region" endpoint in
-        the existing configuration. Calling SetOutsideRegion with hours=0
-        effectively cancels the outside-region status. If the API later exposes
-        a dedicated endpoint, only this method needs updating.
+        Cancels the outside-region status by posting to SetOutsideRegion with
+        Geofence set to "ENTER", which signals the user has re-entered their
+        response region.
 
         Raises:
             PreComAuthError: token rejected.
             PreComApiError: other failure.
         """
-        await self.set_outside_region(hours=0, geofence="")
+        if self._token is None:
+            await self.authenticate()
+
+        url = f"{API_SET_OUTSIDE_REGION_URL}?hours=0"
+        body = {"Location": {"Geofence": "ENTER"}}
+
+        try:
+            async with self._session.post(
+                url,
+                headers=self._auth_headers(),
+                json=body,
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by SetOutsideRegion (401)")
+                if response.status not in (200, 204):
+                    raise PreComApiError(
+                        f"SetOutsideRegion returned HTTP {response.status}"
+                    )
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error setting in region: {err}"
+            ) from err

@@ -21,9 +21,13 @@ class PreComCoordinatorData:
         self,
         alarm_id: str,
         functions: list[dict[str, Any]],
+        text: str,
+        timestamp: str,
     ) -> None:
         self.alarm_id = alarm_id      # alarm ID string, or STATE_NO_ALARM
         self.functions = functions    # list of {label: str, users: list[str]}
+        self.text = text              # alarm message text
+        self.timestamp = timestamp    # alarm date/time string from API
 
 
 class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
@@ -70,10 +74,14 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             raise UpdateFailed(f"PreCom API error: {err}") from err
 
         if not alarms:
-            return PreComCoordinatorData(alarm_id=STATE_NO_ALARM, functions=[])
+            return PreComCoordinatorData(
+                alarm_id=STATE_NO_ALARM, functions=[], text="", timestamp=""
+            )
 
         latest = alarms[0]
         alarm_id = str(latest.get("MsgInID", STATE_NO_ALARM))
+        text = str(latest.get("Text", ""))
+        timestamp = str(latest.get("Date", ""))
 
         # NOTE: The API uses "ServiceFuntions" (missing 'c') — this is an
         # intentional typo in the PreCom API response. Do not correct it.
@@ -86,15 +94,17 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             for func in raw_functions
         ]
 
-        return PreComCoordinatorData(alarm_id=alarm_id, functions=functions)
+        return PreComCoordinatorData(
+            alarm_id=alarm_id, functions=functions, text=text, timestamp=timestamp
+        )
 
-    async def async_set_outside_region(self, hours: int, geofence: str) -> None:
+    async def async_set_outside_region(self, hours: int) -> None:
         """Call set_outside_region on the API client with token-refresh retry."""
         try:
-            await self.client.set_outside_region(hours, geofence)
+            await self.client.set_outside_region(hours)
         except PreComAuthError:
             await self.client.authenticate()
-            await self.client.set_outside_region(hours, geofence)
+            await self.client.set_outside_region(hours)
 
     async def async_set_in_region(self) -> None:
         """Call set_in_region on the API client with token-refresh retry."""

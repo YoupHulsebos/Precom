@@ -45,6 +45,8 @@ Credentials are validated against the PreCom API before the entry is saved.
 | Attribute | Description |
 |-----------|-------------|
 | `alarm_id` | Same as entity state — useful in templates |
+| `text` | Alarm message text |
+| `timestamp` | Date/time of the alarm as returned by the API |
 | `functions` | List of `{label, users}` objects for the alarm |
 | `last_updated` | ISO timestamp of the last successful poll |
 
@@ -56,12 +58,15 @@ Mark yourself as **outside** your response region.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `hours` | Yes | Duration in hours (1–24) |
-| `geofence` | Yes | Geofence identifier as used by the PreCom API |
+| `hours` | Yes | Duration in hours (1–72) |
 
 ### `precom.set_in_region`
 
 Cancel the outside-region status and mark yourself as **back inside** your response region. No fields required.
+
+### `precom.update_alarm`
+
+Force an immediate refresh of the latest alarm data from PreCom, without waiting for the next scheduled poll interval. No fields required.
 
 ## Automation example
 

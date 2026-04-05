@@ -15,6 +15,8 @@ from .const import (
     ATTR_ALARM_ID,
     ATTR_FUNCTIONS,
     ATTR_LAST_UPDATED,
+    ATTR_TEXT,
+    ATTR_TIMESTAMP,
     DOMAIN,
     STATE_NO_ALARM,
 )
@@ -76,6 +78,8 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             return {}
         return {
             ATTR_ALARM_ID: self.coordinator.data.alarm_id,
+            ATTR_TEXT: self.coordinator.data.text,
+            ATTR_TIMESTAMP: self.coordinator.data.timestamp,
             ATTR_FUNCTIONS: self.coordinator.data.functions,
             ATTR_LAST_UPDATED: datetime.now(timezone.utc).isoformat(),
         }

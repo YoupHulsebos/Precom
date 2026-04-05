@@ -13,13 +13,13 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import PreComApiClient
 from .const import (
-    ATTR_GEOFENCE,
     ATTR_HOURS,
     CONF_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     SERVICE_SET_IN_REGION,
     SERVICE_SET_OUTSIDE_REGION,
+    SERVICE_UPDATE_ALARM,
 )
 from .coordinator import PreComCoordinator
 
@@ -30,7 +30,6 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 SET_OUTSIDE_REGION_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_HOURS): vol.All(int, vol.Range(min=1, max=72)),
-        vol.Required(ATTR_GEOFENCE): cv.string,
     }
 )
 SET_IN_REGION_SCHEMA = vol.Schema({})
@@ -67,19 +66,22 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not hass.data[DOMAIN]:
             hass.services.async_remove(DOMAIN, SERVICE_SET_OUTSIDE_REGION)
             hass.services.async_remove(DOMAIN, SERVICE_SET_IN_REGION)
+            hass.services.async_remove(DOMAIN, SERVICE_UPDATE_ALARM)
     return unload_ok
 
 
 def _register_services(hass: HomeAssistant, coordinator: PreComCoordinator) -> None:
-    """Register precom.set_outside_region and precom.set_in_region services."""
+    """Register precom services."""
 
     async def handle_set_outside_region(call: ServiceCall) -> None:
         hours: int = call.data[ATTR_HOURS]
-        geofence: str = call.data[ATTR_GEOFENCE]
-        await coordinator.async_set_outside_region(hours, geofence)
+        await coordinator.async_set_outside_region(hours)
 
     async def handle_set_in_region(call: ServiceCall) -> None:
         await coordinator.async_set_in_region()
+
+    async def handle_update_alarm(call: ServiceCall) -> None:
+        await coordinator.async_request_refresh()
 
     hass.services.async_register(
         DOMAIN,
@@ -92,4 +94,10 @@ def _register_services(hass: HomeAssistant, coordinator: PreComCoordinator) -> N
         SERVICE_SET_IN_REGION,
         handle_set_in_region,
         schema=SET_IN_REGION_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_UPDATE_ALARM,
+        handle_update_alarm,
+        schema=vol.Schema({}),
     )
