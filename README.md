@@ -41,7 +41,7 @@ Credentials are validated against the PreCom API before the entry is saved.
 | `sensor.precom_last_alarm` | Sensor | Alarm message text when active, `none` when idle |
 | `sensor.precom_groups` | Sensor | Number of groups the user belongs to |
 | `binary_sensor.precom_availability` | Binary sensor | `on` = available, `off` = unavailable |
-| `binary_sensor.precom_understaffed_<function>` | Binary sensor (per function) | `on` = understaffed in next 24 h, `off` = sufficient |
+| `binary_sensor.precom_staffing_<function>` (default generated name; exact entity_id may vary) | Binary sensor (per function) | `on` = understaffed in next 24 h, `off` = sufficient |
 
 ### Last alarm sensor attributes
 
