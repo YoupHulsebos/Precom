@@ -12,7 +12,7 @@
             },
             "reauth_confirm": {
                 "title": "PreCom opnieuw authenticeren",
-                "description": "Uw PreCom-sessie voor **{username}** is verlopen. Voer uw wachtwoord opnieuw in.",
+                "description": "Uw PreCom wachtwoord voor **{username}** is incorrect. Voer uw wachtwoord opnieuw in.",
                 "data": {
                     "password": "Wachtwoord"
                 }
