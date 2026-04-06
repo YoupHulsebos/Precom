@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "Verbinden met PreCom",
-                "description": "Voer uw PreCom-accountgegevens in. Deze worden versleuteld opgeslagen in Home Assistant.",
+                "description": "Voer uw PreCom-accountgegevens in. Deze worden opgeslagen in Home Assistant.",
                 "data": {
                     "username": "Gebruikersnaam (e-mailadres)",
                     "password": "Wachtwoord",
