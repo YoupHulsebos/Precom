@@ -60,6 +60,9 @@
         "binary_sensor": {
             "availability": {
                 "name": "Beschikbaarheid"
+            },
+            "function_staffing": {
+                "name": "Bezetting {function}"
             }
         }
     },
