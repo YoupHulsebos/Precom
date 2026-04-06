@@ -52,6 +52,9 @@
         "sensor": {
             "last_alarm": {
                 "name": "Laatste alarm"
+            },
+            "groups": {
+                "name": "Groepen"
             }
         },
         "binary_sensor": {

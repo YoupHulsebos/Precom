@@ -27,6 +27,7 @@ class PreComCoordinatorData:
         is_available: bool,
         not_available_timestamp: str,
         not_available_scheduled: bool,
+        groups: list[dict[str, Any]],
     ) -> None:
         self.alarm_id = alarm_id      # alarm ID string, or STATE_NO_ALARM
         self.functions = functions    # list of {label: str, users: list[str]}
@@ -35,6 +36,7 @@ class PreComCoordinatorData:
         self.is_available = is_available              # True when user is available
         self.not_available_timestamp = not_available_timestamp  # ISO ts of unavailability
         self.not_available_scheduled = not_available_scheduled  # scheduled absence
+        self.groups = groups          # list of group dicts from GetAllGroups
 
 
 class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
@@ -85,6 +87,16 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         await self.client.authenticate()
         return await self.client.get_user_info()
 
+    async def _fetch_groups(self) -> list[dict]:
+        """Fetch all groups, re-authenticating once on token rejection."""
+        try:
+            return await self.client.get_all_groups()
+        except PreComAuthError:
+            pass
+
+        await self.client.authenticate()
+        return await self.client.get_all_groups()
+
     def _mark_unavailable(self, reason: str) -> None:
         """Log a warning the first time the service becomes unavailable."""
         if not self._unavailable:
@@ -102,6 +114,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         try:
             alarms = await self._fetch_alarms()
             user_info = await self._fetch_user_info()
+            groups = await self._fetch_groups()
         except PreComAuthError as err:
             self._mark_unavailable(f"authentication failed after token refresh: {err}")
             self._entry.async_start_reauth(self.hass)
@@ -136,6 +149,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
                 is_available=is_available,
                 not_available_timestamp=not_available_timestamp,
                 not_available_scheduled=not_available_scheduled,
+                groups=groups,
             )
 
         latest = alarms[0]
@@ -174,6 +188,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             is_available=is_available,
             not_available_timestamp=not_available_timestamp,
             not_available_scheduled=not_available_scheduled,
+            groups=groups,
         )
 
     async def async_set_unavailable(self, hours: int) -> None:

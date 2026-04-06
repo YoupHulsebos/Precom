@@ -15,6 +15,7 @@ from .const import (
     ATTR_ALARM_ID,
     ATTR_FUNCTIONS,
     ATTR_FUNCTIONS_FORMATTED,
+    ATTR_GROUPS,
     ATTR_LAST_UPDATED,
     ATTR_TEXT,
     ATTR_TIMESTAMP,
@@ -39,7 +40,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the PreCom sensor from a config entry."""
-    async_add_entities([PreComLastAlarmSensor(entry.runtime_data, entry)])
+    async_add_entities([
+        PreComLastAlarmSensor(entry.runtime_data, entry),
+        PreComGroupsSensor(entry.runtime_data, entry),
+    ])
 
     platform = async_get_current_platform()
     platform.async_register_entity_service(
@@ -115,3 +119,49 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
     async def async_update_alarm(self) -> None:
         """Force an immediate refresh of alarm data."""
         await self.coordinator.async_request_refresh()
+
+
+class PreComGroupsSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
+    """Represents the groups the PreCom user belongs to.
+
+    State:    number of groups (int).
+    Attributes:
+        groups       — list of group dicts as returned by the API
+        last_updated — ISO timestamp of the last successful poll
+    """
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "groups"
+
+    def __init__(
+        self,
+        coordinator: PreComCoordinator,
+        entry: PreComConfigEntry,
+    ) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{entry.entry_id}_groups"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="PreCom",
+            manufacturer="PreCom",
+            model="Cloud Alerting Service",
+            entry_type=DeviceEntryType.SERVICE,
+            configuration_url="https://portal.pre-com.nl",
+        )
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of groups."""
+        if self.coordinator.data is None:
+            return 0
+        return len(self.coordinator.data.groups)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return group details as entity attributes."""
+        if self.coordinator.data is None:
+            return {}
+        return {
+            ATTR_GROUPS: self.coordinator.data.groups,
+            ATTR_LAST_UPDATED: datetime.now(timezone.utc).isoformat(),
+        }

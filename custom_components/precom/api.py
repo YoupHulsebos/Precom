@@ -8,6 +8,7 @@ import aiohttp
 
 from .const import (
     API_ALARMS_URL,
+    API_GROUPS_URL,
     API_SET_OUTSIDE_REGION_URL,
     API_TOKEN_URL,
     API_USER_INFO_URL,
@@ -152,6 +153,41 @@ class PreComApiClient:
         except aiohttp.ClientError as err:
             raise PreComApiError(
                 f"Network error fetching user info: {err}"
+            ) from err
+
+    async def get_all_groups(self) -> list[dict[str, Any]]:
+        """Fetch all groups the user belongs to.
+
+        Returns a list of group dicts from the PreCom API.
+
+        Raises:
+            PreComAuthError: token rejected.
+            PreComApiError: other failure.
+        """
+        if self._token is None:
+            await self.authenticate()
+
+        try:
+            async with self._session.get(
+                API_GROUPS_URL,
+                headers=self._auth_headers(),
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by GetAllGroups (401)")
+                if response.status != 200:
+                    raise PreComApiError(
+                        f"GetAllGroups returned HTTP {response.status}"
+                    )
+                data = await response.json(content_type=None)
+                if not isinstance(data, list):
+                    raise PreComApiError(
+                        f"Expected list from GetAllGroups, got {type(data)}"
+                    )
+                return data
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error fetching groups: {err}"
             ) from err
 
     async def set_unavailable(self, hours: int) -> None:
