@@ -28,6 +28,7 @@ class PreComCoordinatorData:
         not_available_timestamp: str,
         not_available_scheduled: bool,
         groups: list[dict[str, Any]],
+        user_groups: list[dict[str, Any]],
     ) -> None:
         self.alarm_id = alarm_id      # alarm ID string, or STATE_NO_ALARM
         self.functions = functions    # list of {label: str, users: list[str]}
@@ -37,6 +38,7 @@ class PreComCoordinatorData:
         self.not_available_timestamp = not_available_timestamp  # ISO ts of unavailability
         self.not_available_scheduled = not_available_scheduled  # scheduled absence
         self.groups = groups          # list of group dicts from GetAllGroups
+        self.user_groups = user_groups  # list of group dicts from GetAllUserGroups (today)
 
 
 class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
@@ -97,6 +99,63 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         await self.client.authenticate()
         return await self.client.get_all_groups()
 
+    async def _fetch_user_groups(self) -> list[dict]:
+        """Fetch user's groups for today and tomorrow with populated ServiceFuntions.
+
+        GetAllUserGroups returns groups with empty ServiceFuntions arrays.
+        GetAllFunctions is called per group for today and tomorrow so that
+        the next 24 hours can be evaluated at 15-minute granularity.
+        DayTotals from tomorrow are merged into today's response.
+        """
+        try:
+            groups = await self.client.get_all_user_groups()
+        except PreComAuthError:
+            await self.client.authenticate()
+            groups = await self.client.get_all_user_groups()
+
+        now = datetime.now(timezone.utc)
+        today = now.strftime("%Y-%m-%dT%H:%M:%S")
+        tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        enriched: list[dict] = []
+        for group in groups:
+            group_id = group.get("GroupID")
+            if group_id is None:
+                enriched.append(group)
+                continue
+            try:
+                full_today = await self.client.get_group_functions(group_id, today)
+                # Fetch tomorrow to cover the full next-24h window.
+                try:
+                    full_tomorrow = await self.client.get_group_functions(group_id, tomorrow)
+                    tomorrow_funcs = {
+                        f.get("ServiceFunctionID"): f
+                        for f in full_tomorrow.get("ServiceFuntions", [])
+                    }
+                    for func in full_today.get("ServiceFuntions", []):
+                        func_id = func.get("ServiceFunctionID")
+                        t_func = tomorrow_funcs.get(func_id)
+                        if t_func:
+                            func.setdefault("DayTotals", {}).update(
+                                t_func.get("DayTotals", {})
+                            )
+                except (PreComAuthError, PreComApiError) as err:
+                    _LOGGER.debug(
+                        "Could not fetch tomorrow's functions for group %s (%s): %s",
+                        group.get("Label"),
+                        group_id,
+                        err,
+                    )
+                enriched.append(full_today)
+            except (PreComAuthError, PreComApiError) as err:
+                _LOGGER.warning(
+                    "Could not fetch functions for group %s (%s): %s",
+                    group.get("Label"),
+                    group_id,
+                    err,
+                )
+                enriched.append(group)
+        return enriched
+
     def _mark_unavailable(self, reason: str) -> None:
         """Log a warning the first time the service becomes unavailable."""
         if not self._unavailable:
@@ -115,6 +174,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             alarms = await self._fetch_alarms()
             user_info = await self._fetch_user_info()
             groups = await self._fetch_groups()
+            user_groups = await self._fetch_user_groups()
         except PreComAuthError as err:
             self._mark_unavailable(f"authentication failed after token refresh: {err}")
             self._entry.async_start_reauth(self.hass)
@@ -150,6 +210,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
                 not_available_timestamp=not_available_timestamp,
                 not_available_scheduled=not_available_scheduled,
                 groups=groups,
+                user_groups=user_groups,
             )
 
         latest = alarms[0]
@@ -189,6 +250,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             not_available_timestamp=not_available_timestamp,
             not_available_scheduled=not_available_scheduled,
             groups=groups,
+            user_groups=user_groups,
         )
 
     async def async_set_unavailable(self, hours: int) -> None:
