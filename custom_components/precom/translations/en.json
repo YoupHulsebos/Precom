@@ -34,6 +34,7 @@
         "abort": {
             "already_configured": "This PreCom account is already configured.",
             "reauth_successful": "Re-authentication was successful.",
+            "reconfigure_successful": "Reconfiguration was successful.",
             "wrong_account": "The credentials belong to a different account and cannot be used to reconfigure this entry."
         }
     },

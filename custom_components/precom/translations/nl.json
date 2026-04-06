@@ -34,7 +34,8 @@
         "abort": {
             "already_configured": "Dit PreCom-account is al geconfigureerd.",
             "reauth_successful": "Herauthenticatie is geslaagd.",
-            "wrong_account": "De inloggegevens behoren tot een ander account en kunnen niet worden gebruikt om deze vermelding opnieuw te configureren."
+            "wrong_account": "De inloggegevens behoren tot een ander account en kunnen niet worden gebruikt om deze vermelding opnieuw te configureren.",
+            "reconfigure_successful": "Herconfiguratie is geslaagd."
         }
     },
     "options": {
