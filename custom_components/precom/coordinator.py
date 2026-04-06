@@ -24,11 +24,19 @@ class PreComCoordinatorData:
         functions: list[dict[str, Any]],
         text: str,
         timestamp: str,
+        is_available: bool,
+        not_available_timestamp: str,
+        not_available_scheduled: bool,
+        groups: list[dict[str, Any]],
     ) -> None:
         self.alarm_id = alarm_id      # alarm ID string, or STATE_NO_ALARM
         self.functions = functions    # list of {label: str, users: list[str]}
         self.text = text              # alarm message text
         self.timestamp = timestamp    # alarm date/time string from API
+        self.is_available = is_available              # True when user is available
+        self.not_available_timestamp = not_available_timestamp  # ISO ts of unavailability
+        self.not_available_scheduled = not_available_scheduled  # scheduled absence
+        self.groups = groups          # list of group dicts from GetAllGroups
 
 
 class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
@@ -69,6 +77,26 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         await self.client.authenticate()
         return await self.client.get_alarm_messages()
 
+    async def _fetch_user_info(self) -> dict:
+        """Fetch user info, re-authenticating once on token rejection."""
+        try:
+            return await self.client.get_user_info()
+        except PreComAuthError:
+            pass
+
+        await self.client.authenticate()
+        return await self.client.get_user_info()
+
+    async def _fetch_groups(self) -> list[dict]:
+        """Fetch all groups, re-authenticating once on token rejection."""
+        try:
+            return await self.client.get_all_groups()
+        except PreComAuthError:
+            pass
+
+        await self.client.authenticate()
+        return await self.client.get_all_groups()
+
     def _mark_unavailable(self, reason: str) -> None:
         """Log a warning the first time the service becomes unavailable."""
         if not self._unavailable:
@@ -82,9 +110,11 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             self._unavailable = False
 
     async def _async_update_data(self) -> PreComCoordinatorData:
-        """Fetch latest alarm data. Called automatically by HA on each interval."""
+        """Fetch latest alarm data and user info. Called automatically by HA on each interval."""
         try:
             alarms = await self._fetch_alarms()
+            user_info = await self._fetch_user_info()
+            groups = await self._fetch_groups()
         except PreComAuthError as err:
             self._mark_unavailable(f"authentication failed after token refresh: {err}")
             self._entry.async_start_reauth(self.hass)
@@ -95,9 +125,31 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
 
         self._mark_available()
 
+        # Parse user availability info
+        # NOTE: The API uses "NotAvailalbeScheduled" (missing 'i') — intentional typo.
+        is_available = not bool(user_info.get("NotAvailable", False))
+        not_available_timestamp = ""
+        raw_na_ts = user_info.get("NotAvailableTimestamp", "")
+        if raw_na_ts:
+            try:
+                dt = datetime.fromisoformat(str(raw_na_ts))
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                not_available_timestamp = dt.isoformat()
+            except ValueError:
+                not_available_timestamp = str(raw_na_ts)
+        not_available_scheduled = bool(user_info.get("NotAvailalbeScheduled", False))
+
         if not alarms:
             return PreComCoordinatorData(
-                alarm_id=STATE_NO_ALARM, functions=[], text="", timestamp=""
+                alarm_id=STATE_NO_ALARM,
+                functions=[],
+                text="",
+                timestamp="",
+                is_available=is_available,
+                not_available_timestamp=not_available_timestamp,
+                not_available_scheduled=not_available_scheduled,
+                groups=groups,
             )
 
         latest = alarms[0]
@@ -129,21 +181,28 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         ]
 
         return PreComCoordinatorData(
-            alarm_id=alarm_id, functions=functions, text=text, timestamp=timestamp
+            alarm_id=alarm_id,
+            functions=functions,
+            text=text,
+            timestamp=timestamp,
+            is_available=is_available,
+            not_available_timestamp=not_available_timestamp,
+            not_available_scheduled=not_available_scheduled,
+            groups=groups,
         )
 
-    async def async_set_outside_region(self, hours: int) -> None:
-        """Call set_outside_region on the API client with token-refresh retry."""
+    async def async_set_unavailable(self, hours: int) -> None:
+        """Call set_unavailable on the API client with token-refresh retry."""
         try:
-            await self.client.set_outside_region(hours)
+            await self.client.set_unavailable(hours)
         except PreComAuthError:
             await self.client.authenticate()
-            await self.client.set_outside_region(hours)
+            await self.client.set_unavailable(hours)
 
-    async def async_set_in_region(self) -> None:
-        """Call set_in_region on the API client with token-refresh retry."""
+    async def async_set_available(self) -> None:
+        """Call set_available on the API client with token-refresh retry."""
         try:
-            await self.client.set_in_region()
+            await self.client.set_available()
         except PreComAuthError:
             await self.client.authenticate()
-            await self.client.set_in_region()
+            await self.client.set_available()

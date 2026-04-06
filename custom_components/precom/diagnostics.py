@@ -22,12 +22,18 @@ async def async_get_config_entry_diagnostics(
 
     data = coordinator.data
     alarm_data: dict[str, Any] = {}
+    availability_data: dict[str, Any] = {}
     if data is not None:
         alarm_data = {
             "alarm_id": data.alarm_id,
             "text": data.text,
             "timestamp": data.timestamp,
             "functions_count": len(data.functions),
+        }
+        availability_data = {
+            "is_available": data.is_available,
+            "not_available_timestamp": data.not_available_timestamp,
+            "not_available_scheduled": data.not_available_scheduled,
         }
 
     return {
@@ -40,5 +46,6 @@ async def async_get_config_entry_diagnostics(
                 else None
             ),
             "last_alarm": alarm_data,
+            "availability": availability_data,
         },
     }

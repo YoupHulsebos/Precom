@@ -4,6 +4,15 @@
       "last_alarm": {
         "default": "mdi:fire-alert"
       }
+    },
+    "binary_sensor": {
+      "availability": {
+        "default": "mdi:account-check",
+        "state": {
+          "true": "mdi:account-check",
+          "false": "mdi:account-cancel"
+        }
+      }
     }
   }
 }

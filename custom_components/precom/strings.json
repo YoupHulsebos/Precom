@@ -52,6 +52,14 @@
     "sensor": {
       "last_alarm": {
         "name": "Last alarm"
+      },
+      "groups": {
+        "name": "Groups"
+      }
+    },
+    "binary_sensor": {
+      "availability": {
+        "name": "Availability"
       }
     }
   },
@@ -67,19 +75,19 @@
     }
   },
   "services": {
-    "set_outside_region": {
-      "name": "Set outside region",
-      "description": "Mark the PreCom user as outside their response region for a set number of hours.",
+    "set_unavailable": {
+      "name": "Set unavailable",
+      "description": "Mark the PreCom user as unavailable (outside region) for a set number of hours.",
       "fields": {
         "hours": {
           "name": "Hours",
-          "description": "Number of hours to stay outside the region (1\u201372)."
+          "description": "Number of hours to stay unavailable (1\u201372)."
         }
       }
     },
-    "set_in_region": {
-      "name": "Set in region",
-      "description": "Cancel the outside-region status and return to in-region."
+    "set_available": {
+      "name": "Set available",
+      "description": "Cancel the unavailable status and return to available."
     },
     "update_alarm": {
       "name": "Update alarm",

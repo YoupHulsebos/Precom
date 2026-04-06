@@ -8,8 +8,10 @@ import aiohttp
 
 from .const import (
     API_ALARMS_URL,
+    API_GROUPS_URL,
     API_SET_OUTSIDE_REGION_URL,
     API_TOKEN_URL,
+    API_USER_INFO_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -117,8 +119,79 @@ class PreComApiClient:
                 f"Network error fetching alarm messages: {err}"
             ) from err
 
-    async def set_outside_region(self, hours: int) -> None:
-        """Mark the user as outside region for the given number of hours.
+    async def get_user_info(self) -> dict:
+        """Fetch user information including availability status.
+
+        Returns a dict with at minimum 'NotAvailable' (bool),
+        'NotAvailableTimestamp' (str|None), and 'NotAvailalbeScheduled' (bool).
+
+        Raises:
+            PreComAuthError: token rejected.
+            PreComApiError: other failure.
+        """
+        if self._token is None:
+            await self.authenticate()
+
+        try:
+            async with self._session.get(
+                API_USER_INFO_URL,
+                headers=self._auth_headers(),
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by GetUserInfo (401)")
+                if response.status != 200:
+                    raise PreComApiError(
+                        f"GetUserInfo returned HTTP {response.status}"
+                    )
+                data = await response.json(content_type=None)
+                if not isinstance(data, dict):
+                    raise PreComApiError(
+                        f"Expected dict from GetUserInfo, got {type(data)}"
+                    )
+                return data
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error fetching user info: {err}"
+            ) from err
+
+    async def get_all_groups(self) -> list[dict[str, Any]]:
+        """Fetch all groups the user belongs to.
+
+        Returns a list of group dicts from the PreCom API.
+
+        Raises:
+            PreComAuthError: token rejected.
+            PreComApiError: other failure.
+        """
+        if self._token is None:
+            await self.authenticate()
+
+        try:
+            async with self._session.get(
+                API_GROUPS_URL,
+                headers=self._auth_headers(),
+                timeout=aiohttp.ClientTimeout(total=15),
+            ) as response:
+                if response.status == 401:
+                    raise PreComAuthError("Token rejected by GetAllGroups (401)")
+                if response.status != 200:
+                    raise PreComApiError(
+                        f"GetAllGroups returned HTTP {response.status}"
+                    )
+                data = await response.json(content_type=None)
+                if not isinstance(data, list):
+                    raise PreComApiError(
+                        f"Expected list from GetAllGroups, got {type(data)}"
+                    )
+                return data
+        except aiohttp.ClientError as err:
+            raise PreComApiError(
+                f"Network error fetching groups: {err}"
+            ) from err
+
+    async def set_unavailable(self, hours: int) -> None:
+        """Mark the user as unavailable/outside region for the given number of hours.
 
         Args:
             hours: Number of hours to stay outside region (passed as query param).
@@ -148,11 +221,11 @@ class PreComApiClient:
                     )
         except aiohttp.ClientError as err:
             raise PreComApiError(
-                f"Network error setting outside region: {err}"
+                f"Network error setting unavailable: {err}"
             ) from err
 
-    async def set_in_region(self) -> None:
-        """Mark the user as back inside region.
+    async def set_available(self) -> None:
+        """Mark the user as available/back inside region.
 
         Cancels the outside-region status by posting to SetOutsideRegion with
         Geofence set to "ENTER", which signals the user has re-entered their
@@ -183,5 +256,5 @@ class PreComApiClient:
                     )
         except aiohttp.ClientError as err:
             raise PreComApiError(
-                f"Network error setting in region: {err}"
+                f"Network error setting available: {err}"
             ) from err

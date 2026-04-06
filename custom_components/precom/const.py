@@ -13,10 +13,12 @@ API_BASE_URL = "https://app.pre-com.nl"
 API_TOKEN_URL = f"{API_BASE_URL}/Token"
 API_ALARMS_URL = f"{API_BASE_URL}/api/v2/Message/GetAlarmMessages"
 API_SET_OUTSIDE_REGION_URL = f"{API_BASE_URL}/api/v2/Available/SetOutsideRegion"
+API_USER_INFO_URL = f"{API_BASE_URL}/api/v2/User/GetUserInfo"
+API_GROUPS_URL = f"{API_BASE_URL}/api/v2/Group/GetAllGroups"
 
 # Service names
-SERVICE_SET_OUTSIDE_REGION = "set_outside_region"
-SERVICE_SET_IN_REGION = "set_in_region"
+SERVICE_SET_UNAVAILABLE = "set_unavailable"
+SERVICE_SET_AVAILABLE = "set_available"
 SERVICE_UPDATE_ALARM = "update_alarm"
 
 # Service field names
@@ -32,3 +34,10 @@ ATTR_FUNCTIONS_FORMATTED = "functions_formatted"
 ATTR_LAST_UPDATED = "last_updated"
 ATTR_TEXT = "text"
 ATTR_TIMESTAMP = "timestamp"
+
+# Availability sensor attribute keys
+ATTR_NOT_AVAILABLE_TIMESTAMP = "not_available_timestamp"
+ATTR_NOT_AVAILABLE_SCHEDULED = "not_available_scheduled"
+
+# Groups sensor attribute keys
+ATTR_GROUPS = "groups"

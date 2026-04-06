@@ -52,6 +52,14 @@
         "sensor": {
             "last_alarm": {
                 "name": "Laatste alarm"
+            },
+            "groups": {
+                "name": "Groepen"
+            }
+        },
+        "binary_sensor": {
+            "availability": {
+                "name": "Beschikbaarheid"
             }
         }
     },
@@ -67,19 +75,19 @@
         }
     },
     "services": {
-        "set_outside_region": {
-            "name": "Buiten de regio instellen",
-            "description": "Markeer de PreCom-gebruiker als buiten zijn responsregio voor een bepaald aantal uren.",
+        "set_unavailable": {
+            "name": "Instellen als niet beschikbaar",
+            "description": "Markeer de PreCom-gebruiker als niet beschikbaar (buiten regio) voor een bepaald aantal uren.",
             "fields": {
                 "hours": {
                     "name": "Uren",
-                    "description": "Aantal uren om buiten de regio te blijven (1–72)."
+                    "description": "Aantal uren om niet beschikbaar te blijven (1–72)."
                 }
             }
         },
-        "set_in_region": {
-            "name": "Binnen de regio instellen",
-            "description": "Annuleer de status buiten de regio en keer terug naar binnen de regio."
+        "set_available": {
+            "name": "Instellen als beschikbaar",
+            "description": "Annuleer de niet-beschikbaarheidsstatus en keer terug naar beschikbaar."
         },
         "update_alarm": {
             "name": "Alarm bijwerken",

@@ -7,10 +7,11 @@ Home Assistant HACS custom integration for the **PreCom** fire department alerti
 
 ```
 custom_components/precom/
-├── __init__.py       # Entry setup, HA service registration (set_outside_region, set_in_region)
+├── __init__.py       # Entry setup; all services now registered as entity services
 ├── api.py            # PreComApiClient — all HTTP; raises PreComAuthError / PreComApiError
 ├── coordinator.py    # PreComCoordinator — polling + token-refresh retry logic
-├── sensor.py         # PreComLastAlarmSensor (state = alarm ID or "none")
+├── sensor.py         # PreComLastAlarmSensor (state = alarm ID or "none"); entity service: update_alarm
+├── binary_sensor.py  # PreComAvailabilitySensor (is_on = available); entity services: set_available, set_unavailable
 ├── config_flow.py    # UI config + options flow (credentials + scan_interval)
 ├── const.py          # All constants; single source of truth for URLs, keys, service names
 ├── services.yaml     # Service descriptions for HA UI
@@ -64,7 +65,7 @@ custom_components/precom/
 - `API_BASE_URL = "https://app.pre-com.nl"`
 - `DEFAULT_SCAN_INTERVAL = 60` seconds (configurable 10–3600)
 - `STATE_NO_ALARM = "none"` — sensor state when no alarm is active
-- `SERVICE_SET_OUTSIDE_REGION`, `SERVICE_SET_IN_REGION` — HA service names
+- `SERVICE_SET_UNAVAILABLE`, `SERVICE_SET_AVAILABLE`, `SERVICE_UPDATE_ALARM` — entity service names
 
 ## Development Notes
 
