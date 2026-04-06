@@ -70,7 +70,7 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
         """Return the alarm ID, or 'none' when no alarm is active."""
         if self.coordinator.data is None:
             return STATE_NO_ALARM
-        return self.coordinator.data.alarm_id
+        return self.coordinator.data.text
 
     @staticmethod
     def _format_functions(functions: list[dict]) -> str:
