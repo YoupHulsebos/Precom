@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "Connect to PreCom",
-                "description": "Enter your PreCom account credentials. These will be stored encrypted in Home Assistant.",
+                "description": "Enter your PreCom account credentials. These will be stored in Home Assistant.",
                 "data": {
                     "username": "Username (email address)",
                     "password": "Password",

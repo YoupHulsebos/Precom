@@ -88,7 +88,7 @@ automation:
 
 ## Troubleshooting
 
-- **Invalid credentials on setup** — verify your username and password at [app.pre-com.nl](https://portal.pre-com.nl).
+- **Invalid credentials on setup** — verify your username and password at [portal.pre-com.nl](https://portal.pre-com.nl).
 - **Sensor stuck on `none`** — check that your account has access to alarm messages and review the Home Assistant logs for API errors.
 - **Rate limiting / connectivity** — increase the scan interval in the integration options.
 - **"Authentication failed" after working correctly** — Home Assistant will automatically prompt you to re-enter your password via a re-authentication notification. Go to **Settings → Integrations → PreCom** and follow the notification.
