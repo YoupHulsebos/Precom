@@ -244,11 +244,10 @@ class PreComApiClient:
         if self._token is None:
             await self.authenticate()
 
-        url = f"{API_GROUP_FUNCTIONS_URL}?groupID={group_id}&date={date}"
-
         try:
             async with self._session.get(
-                url,
+                API_GROUP_FUNCTIONS_URL,
+                params={"groupID": group_id, "date": date},
                 headers=self._auth_headers(),
                 timeout=aiohttp.ClientTimeout(total=15),
             ) as response:
