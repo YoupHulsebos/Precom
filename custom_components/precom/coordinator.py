@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -42,6 +43,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
         client: PreComApiClient,
         scan_interval: int | None,
     ) -> None:
@@ -51,27 +53,47 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             name=DOMAIN,
             update_interval=timedelta(seconds=scan_interval) if scan_interval else None,
         )
+        self._entry = entry
         self.client = client
+        self._unavailable = False
+
+    async def _fetch_alarms(self) -> list[dict]:
+        """Fetch alarms, re-authenticating once on token rejection."""
+        try:
+            return await self.client.get_alarm_messages()
+        except PreComAuthError:
+            pass
+
+        # Token was rejected — re-authenticate and retry once.
+        _LOGGER.debug("PreCom token rejected, re-authenticating")
+        await self.client.authenticate()
+        return await self.client.get_alarm_messages()
+
+    def _mark_unavailable(self, reason: str) -> None:
+        """Log a warning the first time the service becomes unavailable."""
+        if not self._unavailable:
+            _LOGGER.warning("PreCom unavailable: %s", reason)
+            self._unavailable = True
+
+    def _mark_available(self) -> None:
+        """Log recovery once when the service becomes reachable again."""
+        if self._unavailable:
+            _LOGGER.info("PreCom API connection restored")
+            self._unavailable = False
 
     async def _async_update_data(self) -> PreComCoordinatorData:
         """Fetch latest alarm data. Called automatically by HA on each interval."""
         try:
-            alarms = await self.client.get_alarm_messages()
-        except PreComAuthError:
-            _LOGGER.debug("PreCom token rejected, re-authenticating")
-            try:
-                await self.client.authenticate()
-                alarms = await self.client.get_alarm_messages()
-            except PreComAuthError as err:
-                raise UpdateFailed(
-                    f"PreCom authentication failed after token refresh: {err}"
-                ) from err
-            except PreComApiError as err:
-                raise UpdateFailed(
-                    f"PreCom API error after token refresh: {err}"
-                ) from err
+            alarms = await self._fetch_alarms()
+        except PreComAuthError as err:
+            self._mark_unavailable(f"authentication failed after token refresh: {err}")
+            self._entry.async_start_reauth(self.hass)
+            raise UpdateFailed(f"PreCom auth failed: {err}") from err
         except PreComApiError as err:
+            self._mark_unavailable(f"API error: {err}")
             raise UpdateFailed(f"PreCom API error: {err}") from err
+
+        self._mark_available()
 
         if not alarms:
             return PreComCoordinatorData(

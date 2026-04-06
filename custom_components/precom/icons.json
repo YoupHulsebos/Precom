@@ -1,0 +1,9 @@
+{
+  "entity": {
+    "sensor": {
+      "last_alarm": {
+        "default": "mdi:fire-alert"
+      }
+    }
+  }
+}

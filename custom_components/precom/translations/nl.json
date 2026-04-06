@@ -1,0 +1,88 @@
+﻿{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Verbinden met PreCom",
+                "description": "Voer uw PreCom-accountgegevens in. Deze worden versleuteld opgeslagen in Home Assistant.",
+                "data": {
+                    "username": "Gebruikersnaam (e-mailadres)",
+                    "password": "Wachtwoord",
+                    "scan_interval": "Pollinginterval (seconden)"
+                }
+            },
+            "reauth_confirm": {
+                "title": "PreCom opnieuw authenticeren",
+                "description": "Uw PreCom-sessie voor **{username}** is verlopen. Voer uw wachtwoord opnieuw in.",
+                "data": {
+                    "password": "Wachtwoord"
+                }
+            },
+            "reconfigure": {
+                "title": "PreCom opnieuw configureren",
+                "description": "Uw PreCom-accountgegevens bijwerken.",
+                "data": {
+                    "username": "Gebruikersnaam (e-mailadres)",
+                    "password": "Wachtwoord"
+                }
+            }
+        },
+        "error": {
+            "invalid_auth": "Ongeldige gebruikersnaam of wachtwoord. Controleer uw PreCom-gegevens.",
+            "cannot_connect": "Kan de PreCom API niet bereiken. Controleer uw internetverbinding.",
+            "unknown": "Er is een onverwachte fout opgetreden. Controleer de Home Assistant-logboeken."
+        },
+        "abort": {
+            "already_configured": "Dit PreCom-account is al geconfigureerd.",
+            "reauth_successful": "Herauthenticatie is geslaagd.",
+            "wrong_account": "De inloggegevens behoren tot een ander account en kunnen niet worden gebruikt om deze vermelding opnieuw te configureren."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "PreCom-opties",
+                "data": {
+                    "scan_interval": "Pollinginterval (seconden)"
+                }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "last_alarm": {
+                "name": "Laatste alarm"
+            }
+        }
+    },
+    "exceptions": {
+        "action_failed": {
+            "message": "De PreCom-actie is mislukt vanwege een API-fout."
+        },
+        "auth_failed": {
+            "message": "PreCom-authenticatie is mislukt. Authenticeer opnieuw via de integratiepagina."
+        },
+        "no_entry_loaded": {
+            "message": "Er is momenteel geen PreCom-integratie geladen."
+        }
+    },
+    "services": {
+        "set_outside_region": {
+            "name": "Buiten de regio instellen",
+            "description": "Markeer de PreCom-gebruiker als buiten zijn responsregio voor een bepaald aantal uren.",
+            "fields": {
+                "hours": {
+                    "name": "Uren",
+                    "description": "Aantal uren om buiten de regio te blijven (1\u201372)."
+                }
+            }
+        },
+        "set_in_region": {
+            "name": "Binnen de regio instellen",
+            "description": "Annuleer de status 'buiten de regio' en keer terug naar 'binnen de regio'."
+        },
+        "update_alarm": {
+            "name": "Alarm bijwerken",
+            "description": "Handmatig een vernieuwing van de meest recente alarmgegevens activeren."
+        }
+    }
+}
