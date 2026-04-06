@@ -50,7 +50,7 @@
     "entity": {
         "sensor": {
             "last_alarm": {
-                "name": "Laatste alarm"
+                "name": "Laatste alarmering"
             }
         }
     },
