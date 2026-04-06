@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-Home Assistant integration for the [PreCom](https://app.pre-com.nl) fire department alerting service. Monitors incoming P2000 alarms and lets you report your availability (inside or outside your response region) directly from Home Assistant.
+Home Assistant integration for the [PreCom](https://portal.pre-com.nl) fire department alerting service. Monitors incoming P2000 alarms and lets you report your availability (inside or outside your response region) directly from Home Assistant.
 
 ## Requirements
 
@@ -88,7 +88,7 @@ automation:
 
 ## Troubleshooting
 
-- **Invalid credentials on setup** — verify your username and password at [app.pre-com.nl](https://app.pre-com.nl).
+- **Invalid credentials on setup** — verify your username and password at [app.pre-com.nl](https://portal.pre-com.nl).
 - **Sensor stuck on `none`** — check that your account has access to alarm messages and review the Home Assistant logs for API errors.
 - **Rate limiting / connectivity** — increase the scan interval in the integration options.
 - **"Authentication failed" after working correctly** — Home Assistant will automatically prompt you to re-enter your password via a re-authentication notification. Go to **Settings → Integrations → PreCom** and follow the notification.

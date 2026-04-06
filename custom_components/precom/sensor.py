@@ -67,7 +67,7 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             manufacturer="PreCom",
             model="Cloud Alerting Service",
             entry_type=DeviceEntryType.SERVICE,
-            configuration_url="https://app.pre-com.nl",
+            configuration_url="https://portal.pre-com.nl",
         )
 
     @property
