@@ -41,7 +41,7 @@ Credentials are validated against the PreCom API before the entry is saved.
 | `sensor.precom_last_alarm` | Sensor | Alarm message text when active, `none` when idle |
 | `sensor.precom_groups` | Sensor | Number of groups the user belongs to |
 | `binary_sensor.precom_availability` | Binary sensor | `on` = available, `off` = unavailable |
-| `binary_sensor.precom_understaffed_<function>` | Binary sensor (per function) | `on` = understaffed in next 24 h, `off` = sufficient |
+| `binary_sensor.precom_staffing_<function>` | Binary sensor (per function) | `on` = staffing in next 24 h, `off` = sufficient |
 
 ### Last alarm sensor attributes
 
@@ -68,9 +68,9 @@ Credentials are validated against the PreCom API before the entry is saved.
 | `not_available_timestamp` | ISO timestamp when unavailability was set |
 | `not_available_scheduled` | `true` when the absence is scheduler-driven |
 
-### Understaffed sensor attributes
+### Staffing sensor attributes
 
-One binary sensor is created per function (e.g. `binary_sensor.precom_understaffed_chauffeur_ts`). The sensor is `on` (problem) when any 15-minute slot in the next 24 hours has fewer available people than required.
+One binary sensor is created per function (e.g. `binary_sensor.precom_staffing_chauffeur_ts`). The sensor is `on` (problem) when any 15-minute slot in the next 24 hours has fewer available people than required.
 
 | Attribute | Description |
 |-----------|-------------|
@@ -126,7 +126,7 @@ automation:
 
 ## How data is updated
 
-The integration uses a polling model (`iot_class: cloud_polling`). Every `scan_interval` seconds (default 60 s, configurable 10–3600 s) the coordinator fetches alarm data, user info, and understaffed data from the PreCom API. For understaffed, both today's and tomorrow's data are fetched per group so that the next 24 hours can be evaluated at 15-minute granularity. The JWT token is cached in memory; if it is rejected (HTTP 401) the coordinator re-authenticates once and retries before marking the sensor unavailable.
+The integration uses a polling model (`iot_class: cloud_polling`). Every `scan_interval` seconds (default 60 s, configurable 10–3600 s) the coordinator fetches alarm data, user info, and staffing data from the PreCom API. For staffing, both today's and tomorrow's data are fetched per group so that the next 24 hours can be evaluated at 15-minute granularity. The JWT token is cached in memory; if it is rejected (HTTP 401) the coordinator re-authenticates once and retries before marking the sensor unavailable.
 
 No webhooks or push mechanisms are used.
 
@@ -145,7 +145,7 @@ No webhooks or push mechanisms are used.
 | Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `last_updated` |
 | Sensor | `sensor.precom_groups` | Number of groups | Attributes: `groups`, `last_updated` |
 | Binary sensor | `binary_sensor.precom_availability` | `on` = available | Attributes: `not_available_timestamp`, `not_available_scheduled` |
-| Binary sensor | `binary_sensor.precom_understaffed_<function>` | `on` = understaffed | Attributes: `number_needed`, `current_available`, `current_unavailable`, `shortage` |
+| Binary sensor | `binary_sensor.precom_staffing_<function>` | `on` = staffing | Attributes: `number_needed`, `current_available`, `current_unavailable`, `shortage` |
 
 | Service | Target entity | Description |
 |---------|---------------|-------------|
@@ -159,7 +159,7 @@ No webhooks or push mechanisms are used.
 - **No P2000 raw messages** — alarm data is what PreCom exposes via its own API; raw P2000 data is not available.
 - **Single device per entry** — each config entry covers one PreCom account. Multiple accounts require multiple entries.
 - **No alarm history** — only the latest alarm is exposed. Historical alarms are not stored or surfaced.
-- **Understaffed sensors are dynamic** — sensors are added as new functions are discovered during polling. Removing a function from PreCom does not automatically remove the corresponding entity from Home Assistant.
+- **Staffing sensors are dynamic** — sensors are added as new functions are discovered during polling. Removing a function from PreCom does not automatically remove the corresponding entity from Home Assistant.
 
 ## Removing the integration
 
