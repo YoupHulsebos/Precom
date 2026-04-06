@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-Home Assistant integration for the [PreCom](https://portal.pre-com.nl) fire department alerting service. Monitors incoming P2000 alarms and lets you report your availability (inside or outside your response region) directly from Home Assistant.
+Home Assistant integration for the [PreCom](https://portal.pre-com.nl) fire department alerting service. Monitors incoming P2000 alarms, shows staffing levels per function at your fire station, and lets you report your availability (inside or outside your response region) directly from Home Assistant.
 
 ## Requirements
 
@@ -38,35 +38,64 @@ Credentials are validated against the PreCom API before the entry is saved.
 
 | Entity | Type | State |
 |--------|------|-------|
-| `sensor.precom_last_alarm` | Sensor | Alarm ID when active, `none` when idle |
+| `sensor.precom_last_alarm` | Sensor | Alarm message text when active, `none` when idle |
+| `sensor.precom_groups` | Sensor | Number of groups the user belongs to |
+| `binary_sensor.precom_availability` | Binary sensor | `on` = available, `off` = unavailable |
+| `binary_sensor.precom_understaffed_<function>` | Binary sensor (per function) | `on` = understaffed in next 24 h, `off` = sufficient |
 
-### Sensor attributes
+### Last alarm sensor attributes
 
 | Attribute | Description |
 |-----------|-------------|
-| `alarm_id` | Same as entity state — useful in templates |
-| `text` | Alarm message text |
+| `alarm_id` | Internal alarm ID |
+| `text` | Alarm message text (same as entity state) |
 | `timestamp` | Date/time of the alarm as returned by the API |
 | `functions` | List of `{label, users}` objects for the alarm |
+| `functions_formatted` | Human-readable text listing each function and its users |
 | `last_updated` | ISO timestamp of the last successful poll |
+
+### Groups sensor attributes
+
+| Attribute | Description |
+|-----------|-------------|
+| `groups` | List of group objects as returned by the API |
+| `last_updated` | ISO timestamp of the last successful poll |
+
+### Availability sensor attributes
+
+| Attribute | Description |
+|-----------|-------------|
+| `not_available_timestamp` | ISO timestamp when unavailability was set |
+| `not_available_scheduled` | `true` when the absence is scheduler-driven |
+
+### Understaffed sensor attributes
+
+One binary sensor is created per function (e.g. `binary_sensor.precom_understaffed_chauffeur_ts`). The sensor is `on` (problem) when any 15-minute slot in the next 24 hours has fewer available people than required.
+
+| Attribute | Description |
+|-----------|-------------|
+| `number_needed` | Minimum staffing level required |
+| `current_available` | Number of available people in the current 15-minute slot (from DayTotals) |
+| `current_unavailable` | Number of people in the function who are currently marked unavailable |
+| `shortage` | `max(0, number_needed − current_available)` |
 
 ## Services
 
-### `precom.set_outside_region`
+### `precom.set_unavailable`
 
-Mark yourself as **outside** your response region.
+Mark yourself as **unavailable** (outside region) for a number of hours. Targets the `binary_sensor.precom_availability` entity.
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `hours` | Yes | Duration in hours (1–72) |
 
-### `precom.set_in_region`
+### `precom.set_available`
 
-Cancel the outside-region status and mark yourself as **back inside** your response region. No fields required.
+Cancel the unavailable status and mark yourself as **available** again. Targets the `binary_sensor.precom_availability` entity. No fields required.
 
 ### `precom.update_alarm`
 
-Force an immediate refresh of the latest alarm data from PreCom, without waiting for the next scheduled poll interval. No fields required.
+Force an immediate refresh of the latest alarm data from PreCom, without waiting for the next scheduled poll interval. Targets the `sensor.precom_last_alarm` entity. No fields required.
 
 ## Automation example
 
@@ -83,49 +112,54 @@ automation:
       - service: notify.mobile_app_your_phone
         data:
           title: "PreCom Alarm"
-          message: "Alarm ID: {{ states('sensor.precom_last_alarm') }}"
+          message: "{{ states('sensor.precom_last_alarm') }}"
 ```
 
 ## Troubleshooting
 
 - **Invalid credentials on setup** — verify your username and password at [portal.pre-com.nl](https://portal.pre-com.nl).
 - **Sensor stuck on `none`** — check that your account has access to alarm messages and review the Home Assistant logs for API errors.
+- **No staffing sensors appearing** — the sensors are created dynamically after the first successful poll. Reload the integration if they do not appear after a minute.
 - **Rate limiting / connectivity** — increase the scan interval in the integration options.
 - **"Authentication failed" after working correctly** — Home Assistant will automatically prompt you to re-enter your password via a re-authentication notification. Go to **Settings → Integrations → PreCom** and follow the notification.
 - **Reconfiguring after an email/password change** — click the three-dot menu on the integration card → **Reconfigure**, enter new credentials.
 
 ## How data is updated
 
-The integration uses a polling model (`iot_class: cloud_polling`). Every `scan_interval` seconds (default 60 s, configurable 10–3600 s) the coordinator calls `GET /api/v2/Message/GetAlarmMessages` on the PreCom API. The JWT token is cached in memory; if it is rejected (HTTP 401) the coordinator re-authenticates once and retries before marking the sensor unavailable.
+The integration uses a polling model (`iot_class: cloud_polling`). Every `scan_interval` seconds (default 60 s, configurable 10–3600 s) the coordinator fetches alarm data, user info, and understaffed data from the PreCom API. For understaffed, both today's and tomorrow's data are fetched per group so that the next 24 hours can be evaluated at 15-minute granularity. The JWT token is cached in memory; if it is rejected (HTTP 401) the coordinator re-authenticates once and retries before marking the sensor unavailable.
 
 No webhooks or push mechanisms are used.
 
 ## Use cases
 
 - **Alarm notifications** — trigger a mobile notification, flash a light, or start a siren whenever `sensor.precom_last_alarm` changes to a non-`none` value.
-- **Automatic availability reporting** — use a device tracker or input boolean to automatically call `precom.set_outside_region` when you leave home.
-- **Dashboard card** — display the latest alarm text (`alarm_id`, `text`, `timestamp` attributes) on a Lovelace dashboard.
-- **Response tracking** — combined with `precom.set_in_region` / `precom.set_outside_region`, build automations that keep PreCom in sync with your physical location.
+- **Automatic availability reporting** — use a device tracker or input boolean to automatically call `precom.set_unavailable` when you leave home.
+- **Dashboard card** — display the latest alarm text and staffing levels on a Lovelace dashboard.
+- **Understaffing alerts** — use the staffing binary sensors to send a notification when your fire station is short on a specific function in the coming hours.
+- **Response tracking** — combined with `precom.set_available` / `precom.set_unavailable`, build automations that keep PreCom in sync with your physical location.
 
 ## Supported functionality
 
 | Platform | Entity | State | Notes |
 |----------|--------|-------|-------|
-| Sensor | `sensor.precom_last_alarm` | Alarm ID or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `last_updated` |
+| Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `last_updated` |
+| Sensor | `sensor.precom_groups` | Number of groups | Attributes: `groups`, `last_updated` |
+| Binary sensor | `binary_sensor.precom_availability` | `on` = available | Attributes: `not_available_timestamp`, `not_available_scheduled` |
+| Binary sensor | `binary_sensor.precom_understaffed_<function>` | `on` = understaffed | Attributes: `number_needed`, `current_available`, `current_unavailable`, `shortage` |
 
-| Service | Description |
-|---------|-------------|
-| `precom.set_outside_region` | Mark user outside response region (1–72 h) |
-| `precom.set_in_region` | Cancel outside-region status |
-| `precom.update_alarm` | Force immediate alarm data refresh |
+| Service | Target entity | Description |
+|---------|---------------|-------------|
+| `precom.set_unavailable` | `binary_sensor.precom_availability` | Mark user unavailable (1–72 h) |
+| `precom.set_available` | `binary_sensor.precom_availability` | Cancel unavailable status |
+| `precom.update_alarm` | `sensor.precom_last_alarm` | Force immediate alarm data refresh |
 
 ## Known limitations
 
 - **Polling only** — no push support; minimum latency equals the configured scan interval.
 - **No P2000 raw messages** — alarm data is what PreCom exposes via its own API; raw P2000 data is not available.
-- **Single device per entry** — each config entry covers one PreCom account. Multiple accounts require multiple entries, but the domain-level services will only target the first loaded entry.
+- **Single device per entry** — each config entry covers one PreCom account. Multiple accounts require multiple entries.
 - **No alarm history** — only the latest alarm is exposed. Historical alarms are not stored or surfaced.
-- **No availability status entity** — the user's in/out-of-region status is write-only (no entity reflecting the current status).
+- **Understaffed sensors are dynamic** — sensors are added as new functions are discovered during polling. Removing a function from PreCom does not automatically remove the corresponding entity from Home Assistant.
 
 ## Removing the integration
 
