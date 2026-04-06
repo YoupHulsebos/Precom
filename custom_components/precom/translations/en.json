@@ -1,0 +1,89 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Connect to PreCom",
+                "description": "Enter your PreCom account credentials. These will be stored in Home Assistant.",
+                "data": {
+                    "username": "Username (email address)",
+                    "password": "Password",
+                    "scan_interval": "Polling interval (seconds)"
+                }
+            },
+            "reauth_confirm": {
+                "title": "Re-authenticate PreCom",
+                "description": "Your PreCom password is incorrect for **{username}**. Please re-enter your password.",
+                "data": {
+                    "password": "Password"
+                }
+            },
+            "reconfigure": {
+                "title": "Reconfigure PreCom",
+                "description": "Update your PreCom account credentials.",
+                "data": {
+                    "username": "Username (email address)",
+                    "password": "Password"
+                }
+            }
+        },
+        "error": {
+            "invalid_auth": "Invalid username or password. Please check your PreCom credentials.",
+            "cannot_connect": "Unable to reach the PreCom API. Check your internet connection.",
+            "unknown": "An unexpected error occurred. Please check the Home Assistant logs."
+        },
+        "abort": {
+            "already_configured": "This PreCom account is already configured.",
+            "reauth_successful": "Re-authentication was successful.",
+            "reconfigure_successful": "Reconfiguration was successful.",
+            "wrong_account": "The credentials belong to a different account and cannot be used to reconfigure this entry."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "PreCom Options",
+                "data": {
+                    "scan_interval": "Polling interval (seconds)"
+                }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "last_alarm": {
+                "name": "Last alarm"
+            }
+        }
+    },
+    "exceptions": {
+        "action_failed": {
+            "message": "The PreCom action failed due to an API error."
+        },
+        "auth_failed": {
+            "message": "PreCom authentication failed. Please re-authenticate via the integration page."
+        },
+        "no_entry_loaded": {
+            "message": "No PreCom integration entry is currently loaded."
+        }
+    },
+    "services": {
+        "set_outside_region": {
+            "name": "Set outside region",
+            "description": "Mark the PreCom user as outside their response region for a set number of hours.",
+            "fields": {
+                "hours": {
+                    "name": "Hours",
+                    "description": "Number of hours to stay outside the region (1–72)."
+                }
+            }
+        },
+        "set_in_region": {
+            "name": "Set in region",
+            "description": "Cancel the outside-region status and return to in-region."
+        },
+        "update_alarm": {
+            "name": "Update alarm",
+            "description": "Manually trigger a refresh of the latest alarm data."
+        }
+    }
+}

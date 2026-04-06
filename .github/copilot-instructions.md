@@ -1,7 +1,7 @@
 # PreCom HACS Integration — Copilot Instructions
 
 ## Project Overview
-Home Assistant HACS custom integration for the **PreCom** fire department alerting service (https://app.pre-com.nl). Allows HA users to view the latest P2000-style alarm and report themselves in or outside of their response region.
+Home Assistant HACS custom integration for the **PreCom** fire department alerting service (https://portal.pre-com.nl). Allows HA users to view the latest P2000-style alarm and report themselves in or outside of their response region.
 
 ## Architecture
 
@@ -72,3 +72,4 @@ custom_components/precom/
 - No external `requirements` — relies only on `aiohttp` (bundled with HA)
 - `hacs.json` is present; follow HACS validation rules (manifest fields, versioning)
 - `manifest.json` placeholder URLs (`yourusername`) should be updated before publishing
+- Goal is a Gold integration. We should follow rules on: https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/

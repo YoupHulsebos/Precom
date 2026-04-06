@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -23,17 +23,22 @@ from .const import (
 )
 from .coordinator import PreComCoordinator
 
+if TYPE_CHECKING:
+    from . import PreComConfigEntry
+
 _LOGGER = logging.getLogger(__name__)
+
+# Coordinator centralises all data updates; no per-entity polling needed.
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PreComConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the PreCom sensor from a config entry."""
-    coordinator: PreComCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([PreComLastAlarmSensor(coordinator, entry)])
+    async_add_entities([PreComLastAlarmSensor(entry.runtime_data, entry)])
 
 
 class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
@@ -47,23 +52,23 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
     """
 
     _attr_has_entity_name = True
-    _attr_name = "Last Alarm"
-    _attr_icon = "mdi:fire-truck"
+    _attr_translation_key = "last_alarm"
 
     def __init__(
         self,
         coordinator: PreComCoordinator,
-        entry: ConfigEntry,
+        entry: PreComConfigEntry,
     ) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_last_alarm"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "PreCom",
-            "manufacturer": "PreCom",
-            "model": "Cloud Alerting Service",
-            "entry_type": "service",
-        }
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="PreCom",
+            manufacturer="PreCom",
+            model="Cloud Alerting Service",
+            entry_type=DeviceEntryType.SERVICE,
+            configuration_url="https://portal.pre-com.nl",
+        )
 
     @property
     def native_value(self) -> str:

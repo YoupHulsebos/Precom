@@ -6,6 +6,7 @@ DOMAIN = "precom"
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_SCAN_INTERVAL = "scan_interval"
+DEFAULT_SCAN_INTERVAL = 60
 
 # API endpoints
 API_BASE_URL = "https://app.pre-com.nl"
