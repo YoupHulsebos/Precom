@@ -1,11 +1,15 @@
-set_outside_region:
-  name: Set Outside Region
+set_unavailable:
+  name: Set Unavailable
   description: >
-    Mark the PreCom user as outside their response region for a number of hours.
+    Mark the PreCom user as unavailable (outside region) for a number of hours.
+  target:
+    entity:
+      integration: precom
+      domain: binary_sensor
   fields:
     hours:
       name: Hours
-      description: Number of hours to remain outside the region (1-72).
+      description: Number of hours to remain unavailable (1-72).
       required: true
       selector:
         number:
@@ -14,11 +18,14 @@ set_outside_region:
           mode: box
           unit_of_measurement: h
 
-set_in_region:
-  name: Set In Region
+set_available:
+  name: Set Available
   description: >
-    Cancel the outside-region status and mark the PreCom user as back inside
-    their response region.
+    Cancel the unavailable status and mark the PreCom user as available again.
+  target:
+    entity:
+      integration: precom
+      domain: binary_sensor
   fields: {}
 
 update_alarm:
@@ -26,4 +33,8 @@ update_alarm:
   description: >
     Force an immediate refresh of the latest alarm data from PreCom,
     without waiting for the next scheduled poll interval.
+  target:
+    entity:
+      integration: precom
+      domain: sensor
   fields: {}

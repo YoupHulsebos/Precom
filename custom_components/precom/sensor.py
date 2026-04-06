@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback, async_get_current_platform
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -19,6 +19,7 @@ from .const import (
     ATTR_TEXT,
     ATTR_TIMESTAMP,
     DOMAIN,
+    SERVICE_UPDATE_ALARM,
     STATE_NO_ALARM,
 )
 from .coordinator import PreComCoordinator
@@ -39,6 +40,13 @@ async def async_setup_entry(
 ) -> None:
     """Set up the PreCom sensor from a config entry."""
     async_add_entities([PreComLastAlarmSensor(entry.runtime_data, entry)])
+
+    platform = async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_UPDATE_ALARM,
+        {},
+        "async_update_alarm",
+    )
 
 
 class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
@@ -103,3 +111,7 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             ),
             ATTR_LAST_UPDATED: datetime.now(timezone.utc).isoformat(),
         }
+
+    async def async_update_alarm(self) -> None:
+        """Force an immediate refresh of alarm data."""
+        await self.coordinator.async_request_refresh()
