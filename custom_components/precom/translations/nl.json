@@ -61,8 +61,8 @@
             "availability": {
                 "name": "Beschikbaarheid"
             },
-            "function_understaffed": {
-                "name": "{function} onderbezet"
+            "function_staffing": {
+                "name": "Bezetting {function}"
             }
         }
     },

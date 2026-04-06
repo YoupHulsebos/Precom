@@ -71,7 +71,7 @@ async def async_setup_entry(
     # Use a seen-set to avoid adding duplicates on subsequent coordinator updates.
     _seen_labels: set[str] = set()
 
-    def _add_understaffed_sensors() -> None:
+    def _add_staffing_sensors() -> None:
         if coordinator.data is None:
             return
 
@@ -88,13 +88,13 @@ async def async_setup_entry(
             if label not in _seen_labels:
                 _seen_labels.add(label)
                 new_entities.append(
-                    PreComFunctionUnderstaffedSensor(coordinator, entry, label)
+                    PreComFunctionStaffingSensor(coordinator, entry, label)
                 )
         if new_entities:
             async_add_entities(new_entities)
 
-    _add_understaffed_sensors()
-    entry.async_on_unload(coordinator.async_add_listener(lambda: _add_understaffed_sensors()))
+    _add_staffing_sensors()
+    entry.async_on_unload(coordinator.async_add_listener(lambda: _add_staffing_sensors()))
 
 
 class PreComAvailabilitySensor(CoordinatorEntity[PreComCoordinator], BinarySensorEntity):
@@ -176,7 +176,7 @@ class PreComAvailabilitySensor(CoordinatorEntity[PreComCoordinator], BinarySenso
         await self.coordinator.async_request_refresh()
 
 
-class PreComFunctionUnderstaffedSensor(CoordinatorEntity[PreComCoordinator], BinarySensorEntity):
+class PreComFunctionStaffingSensor(CoordinatorEntity[PreComCoordinator], BinarySensorEntity):
     """Binary sensor that is 'on' (problem) when a function is understaffed.
 
     One sensor per unique function label, merged across all user groups.
@@ -200,7 +200,7 @@ class PreComFunctionUnderstaffedSensor(CoordinatorEntity[PreComCoordinator], Bin
     ) -> None:
         super().__init__(coordinator)
         self._func_label = func_label
-        self._attr_translation_key = "function_understaffed"
+        self._attr_translation_key = "function_staffing"
         self._attr_translation_placeholders = {"function": func_label}
         self._attr_unique_id = f"{entry.entry_id}_understaffed_{func_label}"
         self._attr_device_info = DeviceInfo(

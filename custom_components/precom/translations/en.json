@@ -61,8 +61,8 @@
             "availability": {
                 "name": "Availability"
             },
-            "function_understaffed": {
-                "name": "{function} understaffed"
+            "function_staffing": {
+                "name": "Staffing {function}"
             }
         }
     },
