@@ -72,3 +72,4 @@ custom_components/precom/
 - No external `requirements` — relies only on `aiohttp` (bundled with HA)
 - `hacs.json` is present; follow HACS validation rules (manifest fields, versioning)
 - `manifest.json` placeholder URLs (`yourusername`) should be updated before publishing
+- Goal is a Gold integration. We should follow rules on: https://developers.home-assistant.io/docs/core/integration-quality-scale/rules/
