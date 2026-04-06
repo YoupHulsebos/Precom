@@ -12,7 +12,7 @@
       },
       "reauth_confirm": {
         "title": "Re-authenticate PreCom",
-        "description": "Your PreCom session for **{username}** has expired. Please re-enter your password.",
+        "description": "Your PreCom password is incorrect for **{username}**. Please re-enter your password.",
         "data": {
           "password": "Password"
         }
