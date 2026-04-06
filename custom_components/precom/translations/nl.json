@@ -62,7 +62,7 @@
                 "name": "Beschikbaarheid"
             },
             "function_understaffed": {
-                "name": "Onderbezet"
+                "name": "{function} onderbezet"
             }
         }
     },

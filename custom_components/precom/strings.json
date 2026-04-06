@@ -62,7 +62,7 @@
         "name": "Availability"
       },
       "function_understaffed": {
-        "name": "Understaffed"
+        "name": "{function} understaffed"
       }
     }
   },
