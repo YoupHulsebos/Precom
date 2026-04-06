@@ -50,7 +50,7 @@
     "entity": {
         "sensor": {
             "last_alarm": {
-                "name": "Laatste alarmering"
+                "name": "Laatste alarm"
             }
         }
     },
@@ -72,13 +72,13 @@
             "fields": {
                 "hours": {
                     "name": "Uren",
-                    "description": "Aantal uren om buiten de regio te blijven (1\u201372)."
+                    "description": "Aantal uren om buiten de regio te blijven (1–72)."
                 }
             }
         },
         "set_in_region": {
             "name": "Binnen de regio instellen",
-            "description": "Annuleer de status 'buiten de regio' en keer terug naar 'binnen de regio'."
+            "description": "Annuleer de status buiten de regio en keer terug naar binnen de regio."
         },
         "update_alarm": {
             "name": "Alarm bijwerken",

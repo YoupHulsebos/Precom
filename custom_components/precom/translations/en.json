@@ -72,7 +72,7 @@
             "fields": {
                 "hours": {
                     "name": "Hours",
-                    "description": "Number of hours to stay outside the region (1\u201372)."
+                    "description": "Number of hours to stay outside the region (1–72)."
                 }
             }
         },
