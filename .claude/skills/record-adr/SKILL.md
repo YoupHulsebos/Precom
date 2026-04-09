@@ -3,7 +3,7 @@ name: record-adr
 description: Use this to create or modify architecture decision records (ADRs)
 ---
 
-IMPORTANT: Use the template stored in `./templates/adr.md` to record the architecture decision.
+IMPORTANT: Use the template stored in `./templates/adr-template.md` to record the architecture decision.
 
 ## Guidelines for recording the decision
 - Use a single sentence to describe the decision made.
