@@ -187,7 +187,9 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
 
         # Parse user availability info
         # NOTE: The API uses "NotAvailalbeScheduled" (missing 'i') — intentional typo.
-        is_available = not bool(user_info.get("NotAvailable", False))
+        not_available_manual = bool(user_info.get("NotAvailable", False))
+        not_available_scheduled = bool(user_info.get("NotAvailalbeScheduled", False))
+        is_available = not (not_available_manual or not_available_scheduled)
         not_available_timestamp = ""
         raw_na_ts = user_info.get("NotAvailableTimestamp", "")
         if raw_na_ts:
@@ -198,7 +200,6 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
                 not_available_timestamp = dt.isoformat()
             except ValueError:
                 not_available_timestamp = str(raw_na_ts)
-        not_available_scheduled = bool(user_info.get("NotAvailalbeScheduled", False))
 
         if not alarms:
             return PreComCoordinatorData(
