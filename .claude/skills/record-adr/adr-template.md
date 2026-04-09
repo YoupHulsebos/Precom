@@ -1,6 +1,6 @@
 # [ADR000] - Title of the ADR
 
-- **Status**: Accepted/Proposed/Superseeded
+- **Status**: Accepted/Proposed/Superseded
 - **Date:** Date recording this decision
 
 ## Context
