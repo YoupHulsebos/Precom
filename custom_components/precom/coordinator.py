@@ -9,8 +9,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import PreComApiClient, PreComAuthError, PreComApiError, PreComPortalError
+from .api import PreComApiClient, PreComAuthError, PreComApiError
 from .const import DOMAIN, STATE_NO_ALARM
+from .htmlscraper import PreComHtmlScraper, PreComPortalError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         hass: HomeAssistant,
         entry: ConfigEntry,
         client: PreComApiClient,
+        htmlscraper: PreComHtmlScraper,
         scan_interval: int | None,
     ) -> None:
         super().__init__(
@@ -71,6 +73,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         )
         self._entry = entry
         self.client = client
+        self.htmlscraper = htmlscraper
         self._unavailable = False
 
     async def _fetch_alarms(self) -> list[dict]:
@@ -256,7 +259,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         voorgestelde_functies: list[dict[str, Any]] = []
         if text:
             try:
-                portal_details = await self.client.get_alarm_portal_details(text)
+                portal_details = await self.htmlscraper.get_alarm_portal_details(text)
                 response_data = portal_details.get("response_data", [])
                 benodigd = portal_details.get("benodigd", [])
                 voorgestelde_functies = portal_details.get(

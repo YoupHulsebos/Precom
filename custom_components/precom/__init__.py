@@ -12,6 +12,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
 )
 from .coordinator import PreComCoordinator
+from .htmlscraper import PreComHtmlScraper
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
@@ -30,7 +31,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: PreComConfigEntry) -> bo
 
     session = async_get_clientsession(hass)
     client = PreComApiClient(username=username, password=password, session=session)
-    coordinator = PreComCoordinator(hass, entry, client, scan_interval)
+    htmlscraper = PreComHtmlScraper(
+        username=username, password=password, session=session
+    )
+    coordinator = PreComCoordinator(
+        hass, entry, client, htmlscraper, scan_interval
+    )
 
     # Raises ConfigEntryNotReady on failure; HA will retry with backoff.
     await coordinator.async_config_entry_first_refresh()
