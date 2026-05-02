@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import PreComApiClient, PreComAuthError, PreComApiError
 from .const import DOMAIN, STATE_NO_ALARM
+from .htmlscraper import PreComHtmlScraper, PreComPortalError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +25,9 @@ class PreComCoordinatorData:
         functions: list[dict[str, Any]],
         text: str,
         timestamp: str,
+        response_data: list[dict[str, Any]],
+        benodigd: list[dict[str, Any]],
+        voorgestelde_functies: list[dict[str, Any]],
         is_available: bool,
         not_available_timestamp: str,
         not_available_scheduled: bool,
@@ -34,6 +38,9 @@ class PreComCoordinatorData:
         self.functions = functions    # list of {label: str, users: list[str]}
         self.text = text              # alarm message text
         self.timestamp = timestamp    # alarm date/time string from API
+        self.response_data = response_data
+        self.benodigd = benodigd
+        self.voorgestelde_functies = voorgestelde_functies
         self.is_available = is_available              # True when user is available
         self.not_available_timestamp = not_available_timestamp  # ISO ts of unavailability
         self.not_available_scheduled = not_available_scheduled  # scheduled absence
@@ -55,6 +62,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         hass: HomeAssistant,
         entry: ConfigEntry,
         client: PreComApiClient,
+        htmlscraper: PreComHtmlScraper,
         scan_interval: int | None,
     ) -> None:
         super().__init__(
@@ -65,6 +73,7 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
         )
         self._entry = entry
         self.client = client
+        self.htmlscraper = htmlscraper
         self._unavailable = False
 
     async def _fetch_alarms(self) -> list[dict]:
@@ -207,6 +216,9 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
                 functions=[],
                 text="",
                 timestamp="",
+                response_data=[],
+                benodigd=[],
+                voorgestelde_functies=[],
                 is_available=is_available,
                 not_available_timestamp=not_available_timestamp,
                 not_available_scheduled=not_available_scheduled,
@@ -242,11 +254,32 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             for func in raw_functions
         ]
 
+        response_data: list[dict[str, Any]] = []
+        benodigd: list[dict[str, Any]] = []
+        voorgestelde_functies: list[dict[str, Any]] = []
+        if text:
+            try:
+                portal_details = await self.htmlscraper.get_alarm_portal_details(text)
+                response_data = portal_details.get("response_data", [])
+                benodigd = portal_details.get("benodigd", [])
+                voorgestelde_functies = portal_details.get(
+                    "voorgestelde_functies", []
+                )
+            except PreComPortalError as err:
+                _LOGGER.warning(
+                    "Could not enrich latest alarm '%s' with portal details: %s",
+                    text,
+                    err,
+                )
+
         return PreComCoordinatorData(
             alarm_id=alarm_id,
             functions=functions,
             text=text,
             timestamp=timestamp,
+            response_data=response_data,
+            benodigd=benodigd,
+            voorgestelde_functies=voorgestelde_functies,
             is_available=is_available,
             not_available_timestamp=not_available_timestamp,
             not_available_scheduled=not_available_scheduled,

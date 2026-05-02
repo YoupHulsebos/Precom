@@ -52,6 +52,9 @@ Credentials are validated against the PreCom API before the entry is saved.
 | `timestamp` | Date/time of the alarm as returned by the API |
 | `functions` | List of `{label, users}` objects for the alarm |
 | `functions_formatted` | Human-readable text listing each function and its users |
+| `ResponseData` | List of `{FullName, ResponseTime, Available, Response}` rows from the portal report |
+| `Benodigd` | List of `{Naam, Aantal, Percentage}` rows from the portal staffing summary, including `Totaal` |
+| `VoorgesteldeFuncties` | List of `{FunctieNaam, FullName}` rows from the portal proposed-function section |
 | `last_updated` | ISO timestamp of the last successful poll |
 
 ### Groups sensor attributes
@@ -96,6 +99,14 @@ Cancel the unavailable status and mark yourself as **available** again. Targets 
 ### `precom.update_alarm`
 
 Force an immediate refresh of the latest alarm data from PreCom, without waiting for the next scheduled poll interval. Targets the `sensor.precom_last_alarm` entity. No fields required.
+
+### `precom.get_alarm_portal_details`
+
+Look up portal report details for a specific alarm message text and return portal response data, staffing requirements, and proposed functions.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `melding` | Yes | Exact alarm message text to search for in the portal report |
 
 ## Automation example
 
@@ -142,7 +153,7 @@ No webhooks or push mechanisms are used.
 
 | Platform | Entity | State | Notes |
 |----------|--------|-------|-------|
-| Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `last_updated` |
+| Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `ResponseData`, `Benodigd`, `VoorgesteldeFuncties`, `last_updated` |
 | Sensor | `sensor.precom_groups` | Number of groups | Attributes: `groups`, `last_updated` |
 | Binary sensor | `binary_sensor.precom_availability` | `on` = available | Attributes: `not_available_timestamp`, `not_available_scheduled` |
 | Binary sensor | `binary_sensor.precom_staffing_<function>` | `on` = staffing | Attributes: `number_needed`, `current_available`, `current_unavailable`, `shortage` |
@@ -152,6 +163,7 @@ No webhooks or push mechanisms are used.
 | `precom.set_unavailable` | `binary_sensor.precom_availability` | Mark user unavailable (1–72 h) |
 | `precom.set_available` | `binary_sensor.precom_availability` | Cancel unavailable status |
 | `precom.update_alarm` | `sensor.precom_last_alarm` | Force immediate alarm data refresh |
+| `precom.get_alarm_portal_details` | None | Return `response_data`, `benodigd`, and `voorgestelde_functies` for a supplied alarm text |
 
 ## Known limitations
 

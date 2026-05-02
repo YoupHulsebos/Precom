@@ -38,3 +38,17 @@ update_alarm:
       integration: precom
       domain: sensor
   fields: {}
+
+get_alarm_portal_details:
+  name: Get Alarm Portal Details
+  description: >
+    Look up portal.pre-com.nl report details for a specific alarm message text
+    and return response data, staffing requirements, and proposed functions.
+  fields:
+    melding:
+      name: Melding
+      description: The exact alarm message text to search for in the portal report.
+      required: true
+      example: P 2 BON-04 BR afval Paasberglaan Arnhem 075341
+      selector:
+        text:

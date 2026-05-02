@@ -29,6 +29,9 @@ async def async_get_config_entry_diagnostics(
             "text": data.text,
             "timestamp": data.timestamp,
             "functions_count": len(data.functions),
+            "response_data_count": len(data.response_data),
+            "benodigd_count": len(data.benodigd),
+            "voorgestelde_functies_count": len(data.voorgestelde_functies),
         }
         availability_data = {
             "is_available": data.is_available,

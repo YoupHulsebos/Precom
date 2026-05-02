@@ -95,6 +95,16 @@
         "update_alarm": {
             "name": "Alarm bijwerken",
             "description": "Handmatig een vernieuwing van de meest recente alarmgegevens activeren."
+        },
+        "get_alarm_portal_details": {
+            "name": "Alarmportaldetails ophalen",
+            "description": "Portalrapportdetails opzoeken voor een specifieke meldingstekst.",
+            "fields": {
+                "melding": {
+                    "name": "Melding",
+                    "description": "De exacte alarmmeldingstekst om in het portalrapport op te zoeken."
+                }
+            }
         }
     }
 }
