@@ -52,6 +52,9 @@ Credentials are validated against the PreCom API before the entry is saved.
 | `timestamp` | Date/time of the alarm as returned by the API |
 | `functions` | List of `{label, users}` objects for the alarm |
 | `functions_formatted` | Human-readable text listing each function and its users |
+| `ResponseData` | List of `{FullName, ResponseTime, Available, Response}` rows from the portal report |
+| `Benodigd` | List of `{Naam, Aantal, Percentage}` rows from the portal staffing summary, including `Totaal` |
+| `VoorgesteldeFuncties` | List of `{FunctieNaam, FullName}` rows from the portal proposed-function section |
 | `last_updated` | ISO timestamp of the last successful poll |
 
 ### Groups sensor attributes
@@ -142,7 +145,7 @@ No webhooks or push mechanisms are used.
 
 | Platform | Entity | State | Notes |
 |----------|--------|-------|-------|
-| Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `last_updated` |
+| Sensor | `sensor.precom_last_alarm` | Alarm text or `none` | Attributes: `alarm_id`, `text`, `timestamp`, `functions`, `functions_formatted`, `ResponseData`, `Benodigd`, `VoorgesteldeFuncties`, `last_updated` |
 | Sensor | `sensor.precom_groups` | Number of groups | Attributes: `groups`, `last_updated` |
 | Binary sensor | `binary_sensor.precom_availability` | `on` = available | Attributes: `not_available_timestamp`, `not_available_scheduled` |
 | Binary sensor | `binary_sensor.precom_staffing_<function>` | `on` = staffing | Attributes: `number_needed`, `current_available`, `current_unavailable`, `shortage` |

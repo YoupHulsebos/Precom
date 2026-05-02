@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import PreComApiClient, PreComAuthError, PreComApiError
+from .api import PreComApiClient, PreComAuthError, PreComApiError, PreComPortalError
 from .const import DOMAIN, STATE_NO_ALARM
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,6 +24,9 @@ class PreComCoordinatorData:
         functions: list[dict[str, Any]],
         text: str,
         timestamp: str,
+        response_data: list[dict[str, Any]],
+        benodigd: list[dict[str, Any]],
+        voorgestelde_functies: list[dict[str, Any]],
         is_available: bool,
         not_available_timestamp: str,
         not_available_scheduled: bool,
@@ -34,6 +37,9 @@ class PreComCoordinatorData:
         self.functions = functions    # list of {label: str, users: list[str]}
         self.text = text              # alarm message text
         self.timestamp = timestamp    # alarm date/time string from API
+        self.response_data = response_data
+        self.benodigd = benodigd
+        self.voorgestelde_functies = voorgestelde_functies
         self.is_available = is_available              # True when user is available
         self.not_available_timestamp = not_available_timestamp  # ISO ts of unavailability
         self.not_available_scheduled = not_available_scheduled  # scheduled absence
@@ -207,6 +213,9 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
                 functions=[],
                 text="",
                 timestamp="",
+                response_data=[],
+                benodigd=[],
+                voorgestelde_functies=[],
                 is_available=is_available,
                 not_available_timestamp=not_available_timestamp,
                 not_available_scheduled=not_available_scheduled,
@@ -242,11 +251,32 @@ class PreComCoordinator(DataUpdateCoordinator[PreComCoordinatorData]):
             for func in raw_functions
         ]
 
+        response_data: list[dict[str, Any]] = []
+        benodigd: list[dict[str, Any]] = []
+        voorgestelde_functies: list[dict[str, Any]] = []
+        if text:
+            try:
+                portal_details = await self.client.get_alarm_portal_details(text)
+                response_data = portal_details.get("response_data", [])
+                benodigd = portal_details.get("benodigd", [])
+                voorgestelde_functies = portal_details.get(
+                    "voorgestelde_functies", []
+                )
+            except PreComPortalError as err:
+                _LOGGER.warning(
+                    "Could not enrich latest alarm '%s' with portal details: %s",
+                    text,
+                    err,
+                )
+
         return PreComCoordinatorData(
             alarm_id=alarm_id,
             functions=functions,
             text=text,
             timestamp=timestamp,
+            response_data=response_data,
+            benodigd=benodigd,
+            voorgestelde_functies=voorgestelde_functies,
             is_available=is_available,
             not_available_timestamp=not_available_timestamp,
             not_available_scheduled=not_available_scheduled,

@@ -13,12 +13,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     ATTR_ALARM_ID,
+    ATTR_BENODIGD,
     ATTR_FUNCTIONS,
     ATTR_FUNCTIONS_FORMATTED,
     ATTR_GROUPS,
     ATTR_LAST_UPDATED,
+    ATTR_RESPONSE_DATA,
     ATTR_TEXT,
     ATTR_TIMESTAMP,
+    ATTR_VOORGESTELDE_FUNCTIES,
     DOMAIN,
     SERVICE_UPDATE_ALARM,
     STATE_NO_ALARM,
@@ -113,6 +116,9 @@ class PreComLastAlarmSensor(CoordinatorEntity[PreComCoordinator], SensorEntity):
             ATTR_FUNCTIONS_FORMATTED: self._format_functions(
                 self.coordinator.data.functions
             ),
+            ATTR_RESPONSE_DATA: self.coordinator.data.response_data,
+            ATTR_BENODIGD: self.coordinator.data.benodigd,
+            ATTR_VOORGESTELDE_FUNCTIES: self.coordinator.data.voorgestelde_functies,
             ATTR_LAST_UPDATED: datetime.now(timezone.utc).isoformat(),
         }
 
