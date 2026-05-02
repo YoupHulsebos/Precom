@@ -1,22 +1,34 @@
 """The PreCom integration."""
 from __future__ import annotations
 
+import logging
+
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import PreComApiClient
 from .const import (
+    ATTR_MELDING,
     CONF_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    SERVICE_GET_ALARM_PORTAL_DETAILS,
 )
 from .coordinator import PreComCoordinator
-from .htmlscraper import PreComHtmlScraper
+from .htmlscraper import PreComHtmlScraper, PreComPortalError
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+_LOGGER = logging.getLogger(__name__)
 
 type PreComConfigEntry = ConfigEntry[PreComCoordinator]
+
+GET_ALARM_PORTAL_DETAILS_SCHEMA = vol.Schema(
+    {vol.Required(ATTR_MELDING): vol.All(str, vol.Length(min=1))}
+)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PreComConfigEntry) -> bool:
@@ -43,6 +55,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: PreComConfigEntry) -> bo
 
     entry.runtime_data = coordinator
 
+    if not hass.services.has_service(DOMAIN, SERVICE_GET_ALARM_PORTAL_DETAILS):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_GET_ALARM_PORTAL_DETAILS,
+            _make_get_alarm_portal_details_handler(hass),
+            schema=GET_ALARM_PORTAL_DETAILS_SCHEMA,
+            supports_response=SupportsResponse.ONLY,
+        )
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Reload the entry when options (e.g. scan_interval) are changed.
@@ -60,4 +81,42 @@ async def _async_update_listener(
 
 async def async_unload_entry(hass: HomeAssistant, entry: PreComConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok and len(hass.config_entries.async_entries(DOMAIN)) <= 1:
+        hass.services.async_remove(DOMAIN, SERVICE_GET_ALARM_PORTAL_DETAILS)
+    return unload_ok
+
+
+def _make_get_alarm_portal_details_handler(hass: HomeAssistant):
+    """Create the domain service handler for portal detail lookups."""
+
+    async def _handle(call: ServiceCall) -> ServiceResponse:
+        melding = str(call.data[ATTR_MELDING]).strip()
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if not entries:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="no_entry_loaded",
+            )
+
+        coordinator = entries[0].runtime_data
+        if len(entries) > 1:
+            _LOGGER.debug(
+                "Multiple PreCom entries loaded; using the first entry for %s",
+                SERVICE_GET_ALARM_PORTAL_DETAILS,
+            )
+
+        try:
+            details = await coordinator.htmlscraper.get_alarm_portal_details(melding)
+        except PreComPortalError as err:
+            raise HomeAssistantError(
+                f"Could not fetch PreCom portal details for '{melding}': {err}"
+            ) from err
+
+        return {
+            "response_data": details.get("response_data", []),
+            "benodigd": details.get("benodigd", []),
+            "voorgestelde_functies": details.get("voorgestelde_functies", []),
+        }
+
+    return _handle

@@ -95,6 +95,16 @@
     "update_alarm": {
       "name": "Update alarm",
       "description": "Manually trigger a refresh of the latest alarm data."
+    },
+    "get_alarm_portal_details": {
+      "name": "Get alarm portal details",
+      "description": "Look up portal report details for a specific alarm message text.",
+      "fields": {
+        "melding": {
+          "name": "Melding",
+          "description": "The exact alarm message text to search for in the portal report."
+        }
+      }
     }
   }
 }

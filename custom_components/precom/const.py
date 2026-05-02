@@ -34,9 +34,11 @@ PORTAL_SEARCH_RESPONSE_URL = f"{PORTAL_BASE_URL}/ReportUser/SearchResponse"
 SERVICE_SET_UNAVAILABLE = "set_unavailable"
 SERVICE_SET_AVAILABLE = "set_available"
 SERVICE_UPDATE_ALARM = "update_alarm"
+SERVICE_GET_ALARM_PORTAL_DETAILS = "get_alarm_portal_details"
 
 # Service field names
 ATTR_HOURS = "hours"
+ATTR_MELDING = "melding"
 
 # Sensor state when no alarm is active
 STATE_NO_ALARM = "none"

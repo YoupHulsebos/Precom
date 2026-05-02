@@ -100,6 +100,14 @@ Cancel the unavailable status and mark yourself as **available** again. Targets 
 
 Force an immediate refresh of the latest alarm data from PreCom, without waiting for the next scheduled poll interval. Targets the `sensor.precom_last_alarm` entity. No fields required.
 
+### `precom.get_alarm_portal_details`
+
+Look up portal report details for a specific alarm message text and return portal response data, staffing requirements, and proposed functions.
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `melding` | Yes | Exact alarm message text to search for in the portal report |
+
 ## Automation example
 
 ```yaml
@@ -155,6 +163,7 @@ No webhooks or push mechanisms are used.
 | `precom.set_unavailable` | `binary_sensor.precom_availability` | Mark user unavailable (1–72 h) |
 | `precom.set_available` | `binary_sensor.precom_availability` | Cancel unavailable status |
 | `precom.update_alarm` | `sensor.precom_last_alarm` | Force immediate alarm data refresh |
+| `precom.get_alarm_portal_details` | None | Return `response_data`, `benodigd`, and `voorgestelde_functies` for a supplied alarm text |
 
 ## Known limitations
 
