@@ -507,7 +507,7 @@ class PreComHtmlScraper:
                 continue
             result.append(
                 {
-                    "FullName": row.get("FullName"),
+                    "FullName": _normalize_portal_text(str(row.get("FullName") or "")),
                     "ResponseTime": row.get("ResponseTime"),
                     "Available": row.get("Available"),
                     "Response": row.get("Response"),
